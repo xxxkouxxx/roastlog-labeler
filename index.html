@@ -349,7 +349,7 @@
                             </button>
                             <button onclick="exportCurrentLabelData()" class="flex items-center justify-center bg-white hover:bg-coffee-50 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
                                 <i data-lucide="file-json" class="w-4 h-4 mr-1.5"></i>
-                                ラベルJSONを書き出し
+                                labels.jsonに追加/更新
                             </button>
                             
                             <button onclick="printCurrentLabel()" class="flex items-center justify-center bg-coffee-800 hover:bg-coffee-900 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md">
@@ -581,6 +581,7 @@
         let qrInstance = null;
         const PUBLIC_APP_URL = '';
         const PUBLIC_APP_URL_KEY = 'roastlog_public_app_url';
+        const LABELS_DRAFT_KEY = 'roastlog_public_labels_draft';
         const FRONT_LOGO_SOURCE = 'ChatGPT Image 2026年6月4日 09_28_46.png';
         const FRONT_LOGO_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAFeCAYAAABejwD9AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAOwgAADsIBFShKgAAAEthJREFUeF7tlNGS3DgOBPf/f/ouNuzbW6fHPRIBkICUGZEvM2KxCLH1139ERIr4i38QEcnCD4yIlOEHRkTK8AMjImX4gRGRMvzAiEgZfmBEpAw/MCJShh8YESnDD4yIlOEHRkTK8AMjImX4gRGRMvzAiEgZfmBEpAw/MCJShh8YESnDD4yIlOEHRkTK8APzUv76668SRf7N+Bvhxf4a/vB3KzGeMsexJ+CFfvPl5vk7KGtwjtPnObI5h/+VT4Zn7egqzMnInADP+pUTGdeaQ//kU+C5JrgCM77zKfBcn5zGuMYc+HdOheeY5ArMuOtUeI4rTmJUWw76qlNg76neheujToG9rzqJUW056Dt2hT2nexeuz7Yr7HnHSYxpyyGv2Al2e4IrMKPKTrDbilMY05QDXvUk7PI078L1uzwJu6w6hTFNOeCIu+H+T3QFZux2N9w/4hTGNOWAM6yG+z3VFZhx0h1wzwwnMKIlB5tpBdzj6d6F67tYAffIdAIjWnKw2WbB3De4AjO6mQVzs53AiJYcbJWrMOctrsCMzq7CnConMKIlB1vtVbjuba7AjAleheuqncCIlhzsLj/BZ9/mCsyY5p/gc7ucwIiWHOwpO3U57QrMmGinc0xgREsOVs+6AjM07gRGtORg9awrMEPjTmBESw5Wz7kCMzTHCcxo6SVt4wrM0BwnMKOll7SFKzBDc5zCmKYcsO53BWZojlMY05QD1v3ehes1zynMaeqFPeoKzNA8pzCnqRf2qCswQ3OcxKi2HLTucQVmaJ6TmNXWi3vEFZihOU5jXGMOXOtdgRma4zTmNfbybnUFZmiOExnZmoPXOldghuY4kZmtvcTbvAvXa45Tmdvcy1zuCszQuJOZ3d4LXeoKzNC4k5nd3gtd6l24XuNOZ/4JvNglrsAMjfkEnnEKL3e6KzBD130KzzmJFzzVFZihaz6JR52GL0rXXIEZuu6TeMxp+JJ03RWYoTGfwiNOwpejMVdghsZ9AuNPwZeicVdghuY4ndEn4MvQHO/C9ZrrZMa250vQHFdghuY7lbHN+QI0xxWYoflOZWRzDl/zXIEZWuNExrXm0DXXu3C91jqNUY05bM33Llyv9U5iVFsOWnNdgRla7yTGtOWQNd8VmKF7nMKIphyu1rgCM3SfExjRkoPVGldghu61O+0bcqBa5124XvfbndYNOUyt9S5cr2fsTOt2HKTWeheu1zN2pm07DlHrvQvX6zm70rIZh6d7vAvX61k70rIVB6d7vAvX61k70q4Vh6b7vAvX63m70a4RB6Z7XIEZ2sNOtGrDQek+V2CG9rATrdpwULrPFZihfexCmyYckO51BWZoH7vQogmHo/tdgRnayw60aMHB6H5XYIb2sgPHW3AoU/wEn53gCsyY7if47BRPc7wBB9LNbJjfxRWYMcEKuEcnT3O0AYfRwd1w/1OuwIyO7ob7d/AkR3fnIE7ZBfba6QrM6GIX2OuUJzm6Owex286wa7UrMOO0XWHPE57i2M4cwE4nwe5VrsCMU06BvXd6imM7cwA7nAzPUuFduH6nk+FZdnmCI7vy4NU+CZ4t07tw/S6fAs9V7QmO7MqDV/pEeMYs78L11T4RnrHa3WzfkQeu9OnwvFHvwvVVvgGeucrdbN+RB67wTfDsEe/C9RW+CZ69wt1s3ZGHrfCtcA4rrsCMLN8K51DhTrbuxoNm+3Y4j7uuwIwM3w7nke1Otu7Gg2YqP+Bc7rgCM6LKDziXbHexbSceMFP5Hc7oiiswI6L8CueT6S627cQDZil/hrP6zhWYsap8DeeU5S627MTDZSnfw5l9cgVm3FW+hzPLcgdbduHBMpTrcHZ/chXmXFWuw9lluIMtu/BgGco9OL8/uQIzrij34Qyj7qB8Fx4qQ1mDc/zKFZhxRVmDc4xaTfkOPFBUicF50hWY8Z2yDmcZtZryHXigiJID5xqdMTM+KXE404jVlO7Aw0SVHDjXjBkz5yslD842YiWl6TxIRMmF843OmTlUcuF8I1ZSms6DrCo1cM6RWTMnI1M+wzmvWklpOg+yqtSRNWvmZGTKZzjniFWUJfMAq0otnHdk5syJZMk1OO9VqyhL5gFWlXqyZp6VI/fg3FesoiyZB1hR9pExd9/fGTj3FasoSWb5VWUv0bn77s7A382qFZSksviKsp+M2UfXyxr8/axYQUkqi68oItfh72fFCkpSWXxFEbkHf0MrZpOeyMIrish9+DtaMZv0RBZeUUTuw9/RitmkJ7LwXUVkHf6e7ppNeiIL31VE1uHv6a7ZpCey8F1FZB3+nlbMJDWNRVd8CjzX0843Fb6PJ74bnuuumaSmsehdJ8OzXFVq4byvOhme5a6ZpKax6F0nwjOsKrlwvqtOhGe4ayapaSx612mwf1TJgXPNcBLsftdM0tJYcsUpsHe2sg5nmekk2P2uWaQlseBdp8De9M6zn5T7cIb0yjPfOQX2vmsWaUkseNcJsPPV/nz2qnIdzu7KDPnsVSfAznfNIi2JBe86AXa+051rrijX4NzuzI9rrtod9r1rFmlJLHjX7rDvSm+uvaJ8hvNamRvXXrE77HvXLNKSWPCu3WHflc5cf0X5DOe1MjOuv2pn2PWuWaQksdyKnWHXSGdmXFH+DGe1Oi9mXLEz7LpiBikpLLZiZ9g10pkZV5Sv4Zwi82LGVbvCnitmkJLCYit2hl1XO3P9HeV3OKPIrJhx1a6w54oZpKSw2IpdYU96B669o/wOZ7Q6L669Y1fYc8UMUlJYbMWusCe9yqd1/N9Xyu9wRivz4rp/r+Xfv7Ir7LliBikpLLZiV9jzT37iyrN8hsrvcEZf+Qk++9Xz/D/tCnuumEFKCout2BX2/M4r676Cz9DTdOvzN+z0yStrvoLP0K6w54oZpKSw2IpdYc8sCf9PT8IuE3qtSvh/2hX2XDVKOIGFVu0Mu57wFOzxladgjxN2hT1XjRJOYKFVO8Ouuz0Fe3zyBOyw286w66pRwgkstGpn2HW3J2CH7zwFe+y0M+y6apRwAgut2h323eUJ2OGqJ2CHnXaGXVeNEk5goYidYddd7ob73/UE7LDDzrBrxCjhBBaK2B32rXY33H/V3XD/arvDvhGjhBNYKOIE2LnK3XD/qLvh/pV2h30jRgknsFDECbBzlTvh3lnuhvtXOAF2jhglnMBCUafA3lnuhvtnuxvun+kU2DtilHACC0WdBLtH3Q33r3I33D/qJNg9apRQAstkOBGeYcXdcP9qT8AOK06D/TOMEFrNIllOhef4zpOwyw5PwR5XnArPkWGE0GoWyfIpdD0Xe+2yC117ReG5sowQWs0iWUotnPcupRbOO8sIodUskqnUwVnvUurgrDONEFrNIplmU5k9Dc56l2+nch7MzjRCaDWLZJsFc69k33l2IpxHtU/kzvk4j6vrrsDMbCOEVrNIthkw80o2n/3u+anwjJU+DZ7vuzPy2avrrsC8bCOEVrNIhRGYdSWXz333/GR4xiqfCM/43Vn53JU1V2BWhRFCq1mkyhWYcSWPz11ZMx2eM9unwnNeOTOfu7LmO5hTYYTQahapcgVmXMnis1fWPAGeN8unw/NeOTefvbruK7i+ygih1SxS6V24/koGn7+67gnwzFHfAs995fx89soawrWVRgitZpFq77CylmuurnsKPPuqb4JnvzqDu8//G66tNkJoNYtUu8LdddH9psOZ3/WtrMzg7vP/gzOvNkJoNYvsUOrhzO8otXDeO4wQWs0iu5RaOO+rSi2c9y4jhFazyE6lFs77O6UWznunEUKrWWS3Ugvn/SelFs57txFCq1nkhFIL502lFs77hBFCq1nkpFIHZ+3M98B5nzJCaDWLnFZqcc574L0+bYTQahbpoMhkeJ87GCG0mkU6KTIN3uEuRgitZpFuikyA97abEUKrWaSrIh3hPe1qhNBqFumuSAd4L7sbIbZ64LD+VuQEvIdTjBBbPXhofyuyA967aUaIrX7A8P6nSCa8X1ONEk5goScosgLv0ROMEk5goacp8gnel6cZJZzAQk9X3g3vw9ONEk5gobcpz4fv/E1GCSew0JuVZ8D3+majhBNYSH8os+D70x9GCSewkP6u9ITvSX83SjiBhfSzcha+D/1slHiCL21Z2Qdnr9eMEk/w5YWVGjhnvW+UeIIvMk3JgXPVNTNISWExjSlrcI4aM4OUFBbTHOUanJvmmEFKCotprvJnOCvNM4OUFBbTfOVXOB/NN4OcFF/4Nt8O56F1ZpCT4ovf6lvhHLTWDHJSfPlHfAs8t9abRVoSC+oenw7Pq3vMIi2JBXWfT4Xn1H1mkZbEgrrfJ8Gz6V6zyEvyUrTwCfBMut8s8pK8GG2cCs+h58wiL8kL0sppsL+eM5PUNBbVs06C3fWcmaSmsaiedwLsrGfNJDWNRbWHnWFXPW8muWlemJZ2hT21h5nkpnlp2toN9tMeZpOeyMLax06wm/Ywm/REFtZedoCdtI/Z5Cd6gVp7GvbRXmaTn+glau9J2EX7WEFJKotrP0/ADtrLCkpSWVz7eQJ20F5WUJPqZRrhTri39rOCmlQv1Ah3wr21l1WUJfMA2tMdcE/tZxVlyTyA9nQH3FP7WUVdshdrjNVwP+1nFXXJXqwxVsK9tJ+VlKbzINrXKriP9rOS2nQv2Bir4D7az0pq071go6yAe2gvqynfgQfSvmbDfO1nNeU78EDa12yYr/2spn4HL9ooM2G29rOa+h28aKPMhNnayx1s2YUH095mwVzt5Q727OJlG2UWzNVe7mDPLl62UWbBXO3jLrbtxANqX7NgrvZxF/t28sKNMgNmag93snU3HlT7mgEztYc72bubl26MGTBTe7iTvbt56caYBXP1rLvZviMPrH3NgJl61t3s39FLN8YMmKln3c3+Hb10Y8yAmXrOExzZlQfXnmbATD3nCc7s6sUbYQbM1DOe4tjOHID2NArz9IynOLezl2+EUZinZzzFuZ29fCOMwjzd70nO7u4FbG8U5ul+T3J2dy9gezNgpu7zNMcbcCDaywyYqfs8zfkGXsDWZsBM3WMHWrTgYLSPGTBT99iBHi28hK2NwjyttwttmnBA2scozNN6u9CniRexrVGYp7V2olUbDkp7GIV5WmsnerXxMrY0CvO01k70auNlbGkU5mmd3ejXyAvZzijM0zq70a+RF7KdUZinNXakZysvZSujME/z7UrbZhygnjMK8zTfrvRt5sVsYxTmaa6dad2Og9QzRmGe5tqZ3u28nC2MwCzNtTv9G3pJjxuBWZprd/o39JIeNwKzNM8JzGjpRT1qBGZpjlOY09TLeswIzNIcpzCnqZf1mBGYpXEnMautF/aIEZilcScxq60X9ogRmKUxpzGvsZd2q1GYp+tOZGZrL+42IzBLY05kZmsv7zYjMEvXncrc5l7gLUZglq45mdntvcTlRmCWrjmZ2e29xOVGYJbedzrzT+BFLjUCs/SeT+AZp/AylxiBWXrPp/Cck3ip043ALL3nU3jOSbzU6UZgll73STzrNF7sVCMwS6/5NJ53Ii93mqswR6/5RJ55Ki95iqswR6/5RJ55qp/wBep1IzBLv/epPPdkXvSQEZiln30yzz6dl33ZVZijn306zz+hl37JVZijf/YNvOOUXvxbRmCWfu1beM9JvfyXjcAs/d038a7T+gO45CrM0a99E+867U/4wvVXV2GO/u7beN+Jf8IXrz+MwCz91TfyzlP/hBdA168Dc/RX38p7T/4TXoS3uwpz9P++mXef/ie8EG81ArP0h2/HCfyEF+ONrsIc/aH4gfkFXpC3uQpzdH2WT8NJAF6Ut7gKc96u/IoT+QJemje4CnPerPyOU/kDvDxPdxXmvFX5GifzAV6ip7oKc96q/BmncwFeqKe5CnPeqHzGCV2EF+sprsKcNyrf45RuwAv2BFdhzpuU6zitm/CyTXcFZrxJuYcTW4QXb6KrMOctyn2cWgBewGmuwIw3KOs4vSC8jFNchTlPV2I4wSR4Mbu7AjOerOTgJBPhJe3qKsx5qpKH0yyAF7abKzDjiUo+TrUQXuAOrsKcpyk1ONkN8DKfdAVmPEmpxQlvghf7hKsw5wnKHpz0ZnjRd7kKc6Yre3Hih+DFr3YFZkxWzuDkD8MfQoWrMGeichbfQBP4w8hyFeZMU3rgm2gIfywRV2DGJKUXvpHm8Ad0x1WY013pi29nCPxRfecqzOms9Me3NBT+2DJ+dMzqqMzCNyb/wB9zB2U2vkH5B/64TynPwbcp/8Af+g7l2fiG5Rf4AchS3olvXi7BD4YfDbmCt0REyvADIyJl+IERkTL8wIhIGX5gRKQMPzAiUoYfGBEpww+MiJThB0ZEyvADIyJl+IERkTL8wIhIGX5gRKQMPzAiUoYfGBEpww+MiJThB0ZEyvADIyJl+IERkTL8wIhIGX5gRKQMPzAiUoYfGBEp47/exqMGqC7lgAAAAABJRU5ErkJggg==';
         let frontLogoImagePromise = null;
@@ -1343,18 +1344,50 @@
         }
 
         async function loadPublicLabels() {
+            const draftLabels = loadDraftLabels();
             if (!(window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
-                return [];
+                return draftLabels;
             }
 
             try {
                 const response = await fetch('labels.json', { cache: 'no-store' });
-                if (!response.ok) return [];
+                if (!response.ok) return draftLabels;
                 const content = await response.json();
-                return Array.isArray(content) ? content.map(normalizeLabelRecord) : [];
+                const remoteLabels = Array.isArray(content) ? content.map(normalizeLabelRecord) : [];
+                return mergeLabelCollections(remoteLabels, draftLabels);
+            } catch (error) {
+                return draftLabels;
+            }
+        }
+
+        function loadDraftLabels() {
+            try {
+                const stored = JSON.parse(localStorage.getItem(LABELS_DRAFT_KEY) || '[]');
+                return Array.isArray(stored) ? stored.map(normalizeLabelRecord) : [];
             } catch (error) {
                 return [];
             }
+        }
+
+        function saveDraftLabels(labels) {
+            localStorage.setItem(LABELS_DRAFT_KEY, JSON.stringify(labels.map(normalizeLabelRecord)));
+        }
+
+        function mergeLabelCollections(...collections) {
+            const merged = new Map();
+            collections.flat().map(normalizeLabelRecord).forEach(label => {
+                merged.set(label.labelId, label);
+            });
+            return Array.from(merged.values()).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+        }
+
+        function upsertLabel(labels, nextLabel) {
+            const normalizedNext = normalizeLabelRecord(nextLabel);
+            const existing = labels.map(normalizeLabelRecord).find(label => label.labelId === normalizedNext.labelId);
+            const mergedLabel = existing
+                ? { ...normalizedNext, createdAt: existing.createdAt || normalizedNext.createdAt }
+                : normalizedNext;
+            return mergeLabelCollections(labels.filter(label => label.labelId !== normalizedNext.labelId), [mergedLabel]);
         }
 
         function mergeGeneratedTemplatesForDeepLink(targetId) {
@@ -2103,8 +2136,10 @@
                 return;
             }
             const label = createLabelSnapshot(bean);
-            downloadJsonFile('labels_export.json', [label]);
-            showToast('選択中ラベルを labels_export.json として書き出しました');
+            publicLabels = upsertLabel(publicLabels, label);
+            saveDraftLabels(publicLabels);
+            downloadJsonFile('labels.json', publicLabels);
+            showToast(`labels.json を書き出しました（${publicLabels.length}件）`);
         }
 
         function normalizeBeanRecord(bean, index = 0) {
