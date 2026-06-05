@@ -795,6 +795,72 @@
             ];
         }
 
+        function tasteProfile(bean) {
+            return {
+                sour: Number(bean?.sour || 0),
+                bitter: Number(bean?.bitter || 0),
+                sweet: Number(bean?.sweet || 0),
+                body: Number(bean?.body || 0),
+                aroma: Number(bean?.aroma || 0)
+            };
+        }
+
+        function localIsoTimestamp(date = new Date()) {
+            const offsetMinutes = -date.getTimezoneOffset();
+            const sign = offsetMinutes >= 0 ? '+' : '-';
+            const absoluteOffset = Math.abs(offsetMinutes);
+            const offsetHours = String(Math.floor(absoluteOffset / 60)).padStart(2, '0');
+            const offsetMins = String(absoluteOffset % 60).padStart(2, '0');
+            const local = new Date(date.getTime() + offsetMinutes * 60000)
+                .toISOString()
+                .slice(0, 19);
+            return `${local}${sign}${offsetHours}:${offsetMins}`;
+        }
+
+        function slugForId(value) {
+            return String(value || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 80) || 'item';
+        }
+
+        function labelIdForBean(bean) {
+            const roastDatePart = hasRoastDate(bean) ? bean.roastDate.replace(/-/g, '') : 'unroasted';
+            return `label-${slugForId(bean?.id || bean?.name)}-${roastDatePart}`;
+        }
+
+        function createLabelSnapshot(bean, options = {}) {
+            const normalizedBean = normalizeBeanRecord(bean);
+            const countries = beanCountryNames(normalizedBean);
+            const roast = roastLevelInfo(normalizedBean.roast);
+            const aging = getAgingStatus(normalizedBean.roastDate);
+            const timestamp = options.timestamp || localIsoTimestamp();
+
+            return {
+                labelId: options.labelId || labelIdForBean(normalizedBean),
+                beanId: normalizedBean.id,
+                sourceBeanName: normalizedBean.name,
+                beanName: normalizedBean.name,
+                countries,
+                originText: modernOriginText(normalizedBean),
+                roast: roast.label,
+                roastLevelValue: roast.value,
+                process: processCode(normalizedBean),
+                processLabel: processLabel(normalizedBean),
+                grind: normalizedBean.grind,
+                weight: labelWeightText(normalizedBean),
+                roastDate: normalizedBean.roastDate,
+                agingStatus: aging.text,
+                bestBefore: bestBeforeText(normalizedBean),
+                tasteProfile: tasteProfile(normalizedBean),
+                notes: normalizedBean.notes || '',
+                status: options.status || 'published',
+                createdAt: options.createdAt || timestamp,
+                updatedAt: options.updatedAt || timestamp
+            };
+        }
+
         function beanRatingHtml(value) {
             const filled = Math.max(0, Math.min(5, Math.round(value)));
             return Array.from({ length: 5 }, (_, index) => {
