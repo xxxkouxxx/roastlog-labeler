@@ -649,7 +649,17 @@
         }
 
         function normalizePublicUrl(url) {
-            return url.trim().replace(/\/+$/, '');
+            const value = String(url || '').trim();
+            if (!value) return '';
+            try {
+                const parsed = new URL(value, window.location.href);
+                parsed.hash = '';
+                parsed.search = '';
+                parsed.pathname = parsed.pathname.replace(/\/index\.html$/i, '/');
+                return parsed.toString().replace(/\/+$/, '');
+            } catch (error) {
+                return value.split('#')[0].split('?')[0].replace(/\/+$/, '');
+            }
         }
 
         function getQrPayload(bean) {
