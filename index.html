@@ -615,12 +615,12 @@
         function getQrPayload(bean) {
             const publicUrl = getPublicAppUrl();
             if (publicUrl) {
-                return `${normalizePublicUrl(publicUrl)}/#bean-${bean.id}`;
+                return `${normalizePublicUrl(publicUrl)}/#label-${bean.id}`;
             }
 
             if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
                 const baseUrl = window.location.origin + window.location.pathname;
-                return `${baseUrl}#bean-${bean.id}`;
+                return `${baseUrl}#label-${bean.id}`;
             }
 
             return `ROASTLOG:${bean.id}`;
@@ -1235,7 +1235,7 @@
 
         window.onload = function() {
             lucide.createIcons();
-            isQrViewMode = isBeanDeepLink();
+            isQrViewMode = isLabelDeepLink();
             document.body.classList.toggle('qr-view', isQrViewMode);
             
             // Sync Local Storage
@@ -1250,12 +1250,17 @@
             renderBeansList();
 
             // QR Code Auto Routing (Deep linking feature)
-            // If the URL has a hash parameter like #bean-1, auto-select and notify
+            // #bean-ID opens the manager with that bean selected.
+            // #label-ID opens a read-only QR view. For now label IDs map to bean IDs.
             handleUrlDeepLink();
         };
 
-        function isBeanDeepLink() {
-            return window.location.hash.startsWith('#bean-');
+        function isLabelDeepLink() {
+            return window.location.hash.startsWith('#label-');
+        }
+
+        function deepLinkId(prefix) {
+            return window.location.hash.replace(prefix, '');
         }
 
         function generatedBeanTemplates() {
@@ -1275,13 +1280,23 @@
         // Deep link router to detect scan action
         function handleUrlDeepLink() {
             const hash = window.location.hash;
-            if (hash && hash.startsWith('#bean-')) {
-                const id = hash.replace('#bean-', '');
+            if (hash && hash.startsWith('#label-')) {
+                const id = deepLinkId('#label-');
+                mergeGeneratedTemplatesForDeepLink(id);
+                const found = beans.find(b => b.id === id);
+                if (found) {
+                    selectBean(id, { preserveHash: true });
+                    showToast(`「${found.name}」のラベル情報を表示しています`);
+                } else {
+                    updateUIState();
+                }
+            } else if (hash && hash.startsWith('#bean-')) {
+                const id = deepLinkId('#bean-');
                 mergeGeneratedTemplatesForDeepLink(id);
                 const found = beans.find(b => b.id === id);
                 if (found) {
                     selectBean(id);
-                    showToast(`「${found.name}」のログをQRコードから読み込みました！`);
+                    showToast(`「${found.name}」を選択しました`);
                 } else {
                     if (beans.length > 0) selectBean(beans[0].id);
                 }
@@ -1387,12 +1402,15 @@
             }
         }
 
-        function selectBean(id) {
+        function selectBean(id, options = {}) {
             selectedBeanId = id;
             updateUIState();
             renderBeansList();
             
             // Sync active hash securely without bouncing page
+            if (options.preserveHash) {
+                return;
+            }
             if (history.pushState) {
                 history.pushState(null, null, `#bean-${id}`);
             } else {
