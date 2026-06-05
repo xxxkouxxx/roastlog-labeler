@@ -544,7 +544,7 @@
                 origin: "ETHIOPIA",
                 countries: ["ETHIOPIA"],
                 roast: "浅煎り",
-                roastDate: "2026-05-28", // Context Date: 2026-06-01
+                roastDate: "2026-05-28",
                 grind: "豆のまま",
                 weight: "250g",
                 sour: 4.5,
@@ -1510,11 +1510,12 @@
             if (!hasRoastDate(roastDateStr)) {
                 return { text: '焙煎日未入力', colorClass: 'text-coffee-700 bg-coffee-100', days: null };
             }
-            const roastDate = new Date(roastDateStr);
+            const roastDate = new Date(`${roastDateStr}T00:00:00`);
             if (Number.isNaN(roastDate.getTime())) {
                 return { text: '焙煎日未入力', colorClass: 'text-coffee-700 bg-coffee-100', days: null };
             }
-            const today = new Date("2026-06-01"); // Constant today context
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const diffTime = today - roastDate;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
