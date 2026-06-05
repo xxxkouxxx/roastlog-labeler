@@ -342,10 +342,14 @@
                         </div>
 
                         <!-- Actions -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                             <button onclick="downloadLabelImage()" class="flex items-center justify-center bg-coffee-100 hover:bg-coffee-200 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
                                 <i data-lucide="download" class="w-4 h-4 mr-1.5"></i>
                                 PNGをダウンロード (300dpi・白黒)
+                            </button>
+                            <button onclick="exportCurrentLabelData()" class="flex items-center justify-center bg-white hover:bg-coffee-50 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
+                                <i data-lucide="file-json" class="w-4 h-4 mr-1.5"></i>
+                                ラベルJSONを書き出し
                             </button>
                             
                             <button onclick="printCurrentLabel()" class="flex items-center justify-center bg-coffee-800 hover:bg-coffee-900 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md">
@@ -2056,6 +2060,25 @@
             dlAnchor.setAttribute("href", dataStr);
             dlAnchor.setAttribute("download", `roastlog_backup_${new Date().toISOString().split('T')[0]}.json`);
             dlAnchor.click();
+        }
+
+        function downloadJsonFile(filename, data) {
+            const dataStr = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", filename);
+            dlAnchor.click();
+        }
+
+        function exportCurrentLabelData() {
+            const bean = beans.find(b => b.id === selectedBeanId);
+            if (!bean) {
+                showToast('書き出すラベルを選択してください');
+                return;
+            }
+            const label = createLabelSnapshot(bean);
+            downloadJsonFile('labels_export.json', [label]);
+            showToast('選択中ラベルを labels_export.json として書き出しました');
         }
 
         function normalizeBeanRecord(bean, index = 0) {
