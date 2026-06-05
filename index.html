@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoastLog & Labeler PRO</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        coffee: {
+                            50: '#fdfbf7',
+                            100: '#f6f1eb',
+                            200: '#ecdcd0',
+                            300: '#dac0aa',
+                            400: '#c59d7f',
+                            500: '#a3714c',
+                            600: '#8b5a36',
+                            700: '#6f4427',
+                            800: '#4a2c1b',
+                            900: '#2b1a10',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- QRious for QR Code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <!-- Generated green bean templates. Regenerate with scripts/bean_info_to_import_json.js. -->
+    <script src="beans_import.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Playfair+Display:ital,wght=0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #fdfbf7;
+        }
+        .font-serif-title {
+            font-family: 'Playfair Display', 'Noto Sans JP', serif;
+        }
+        /* Hide scrollbars for a clean mobile look */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f6f1eb;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #dac0aa;
+            border-radius: 3px;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-label-area, #printable-label-area * {
+                visibility: visible;
+            }
+            #printable-label-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: var(--print-width, 62mm) !important;
+                height: var(--print-height, 62mm) !important;
+                margin: 0;
+                padding: 0;
+                box-shadow: none !important;
+                background: white !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-coffee-900 min-h-screen flex flex-col pb-16 md:pb-0">
+
+    <!-- Header (No Print) -->
+    <header class="border-b border-coffee-200 bg-white sticky top-0 z-30 no-print shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-coffee-700 text-white p-2 rounded-xl shadow-inner">
+                    <i data-lucide="coffee" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight font-serif-title text-coffee-800 flex items-center">
+                        RoastLog <span class="text-coffee-500 mx-1">&</span> Labeler <span class="ml-1.5 text-[10px] bg-coffee-100 text-coffee-700 px-1.5 py-0.5 rounded-full uppercase tracking-wider font-sans font-black">Pro</span>
+                    </h1>
+                    <p class="text-[10px] text-coffee-500 font-medium">Cloud Web & Brother Printer Sync</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <!-- Add Button (Icon on mobile, Text on Desktop) -->
+                <button onclick="openAddModal()" class="bg-coffee-700 hover:bg-coffee-800 text-white p-2 md:px-4 md:py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center shadow-sm">
+                    <i data-lucide="plus" class="w-4 h-4 md:mr-1.5"></i>
+                    <span class="hidden md:inline">新規の豆を登録</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Scan Notification Toast (Appears when deep-linked from QR) -->
+    <div id="toast-notification" class="fixed top-20 left-1/2 -translate-x-1/2 bg-coffee-800 text-white px-4 py-2.5 rounded-xl shadow-xl z-50 flex items-center space-x-2 text-xs font-bold transition-all duration-500 transform translate-y-[-150%] opacity-0 pointer-events-none no-print">
+        <i data-lucide="scan-line" class="w-4 h-4 text-amber-400"></i>
+        <span id="toast-message">QRコードから豆のデータを読み込みました！</span>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 no-print">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Side: Coffee Inventory -->
+            <div class="lg:col-span-5 flex flex-col space-y-6">
+                <div class="bg-white p-5 rounded-2xl border border-coffee-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-bold text-coffee-800 flex items-center text-base">
+                            <i data-lucide="boxes" class="w-5 h-5 mr-2 text-coffee-600"></i>
+                            保存中の豆インベントリ
+                        </h2>
+                        <span id="bean-count" class="text-[11px] font-black bg-coffee-100 text-coffee-700 px-2.5 py-1 rounded-full">0 CANISTERS</span>
+                    </div>
+                    
+                    <!-- Search and Filter -->
+                    <div class="relative mb-4">
+                        <i data-lucide="search" class="absolute left-3 top-2.5 text-coffee-400 w-4.5 h-4.5"></i>
+                        <input type="text" id="search-input" oninput="filterBeans()" placeholder="名前・産地・焙煎度で検索..." class="w-full pl-9.5 pr-4 py-2 border border-coffee-200 rounded-xl bg-coffee-50/50 text-xs focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-all">
+                    </div>
+
+                    <!-- Beans List Container -->
+                    <div id="beans-list" class="space-y-3 max-h-[480px] overflow-y-auto pr-1">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+
+                <!-- Backup & Sync (Useful for multiple devices) -->
+                <div class="bg-coffee-100/50 p-4 rounded-xl border border-coffee-200 text-xs text-coffee-700 space-y-3">
+                    <div class="flex items-center space-x-1.5 font-bold text-coffee-800">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-coffee-600"></i>
+                        <span>デバイス間のデータ同期について</span>
+                    </div>
+                    <p class="text-[11px] leading-relaxed text-coffee-600">
+                        データはブラウザに自動保存されます。他スマホへ移行したい場合は、インベントリデータをまるごと書き出して移行できます。
+                    </p>
+                    <div class="flex space-x-2">
+                        <button onclick="exportData()" class="flex-1 bg-white hover:bg-coffee-50 border border-coffee-300 py-1.5 rounded-lg font-bold text-center">データ書き出し</button>
+                        <button onclick="importData()" class="flex-1 bg-white hover:bg-coffee-50 border border-coffee-300 py-1.5 rounded-lg font-bold text-center">データを読み込む</button>
+                    </div>
+                    <button onclick="addGeneratedBeanTemplates()" class="w-full bg-coffee-700 hover:bg-coffee-800 text-white py-2 rounded-lg font-bold text-center">
+                        生豆テンプレート25件を追加
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Side: Details & Label Engine -->
+            <div class="lg:col-span-7 flex flex-col space-y-6">
+                
+                <!-- Main Workspace (Hidden if no bean is selected) -->
+                <div id="detail-workspace" class="hidden flex flex-col space-y-6">
+                    
+                    <!-- Details & Taste Profile -->
+                    <div class="bg-white p-5 md:p-6 rounded-2xl border border-coffee-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                                    <span id="detail-origin" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-coffee-100 text-coffee-700">GUATEMALA</span>
+                                    <span id="detail-roast-badge" class="text-[10px] font-black px-2 py-0.5 rounded text-white bg-amber-800">やや深煎り</span>
+                                </div>
+                                <h2 id="detail-name" class="text-xl md:text-2xl font-black text-coffee-800 font-serif-title">アンティグア SHB</h2>
+                            </div>
+                            <div class="flex space-x-1">
+                                <button onclick="createRoastFromCurrentTemplate()" class="p-2 text-coffee-500 hover:text-coffee-800 hover:bg-coffee-100 rounded-xl transition-all" title="この豆から焙煎ラベルを作成">
+                                    <i data-lucide="copy-plus" class="w-4.5 h-4.5"></i>
+                                </button>
+                                <button onclick="editCurrentBean()" class="p-2 text-coffee-500 hover:text-coffee-800 hover:bg-coffee-100 rounded-xl transition-all" title="情報を編集">
+                                    <i data-lucide="edit" class="w-4.5 h-4.5"></i>
+                                </button>
+                                <button onclick="deleteCurrentBean()" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all" title="削除">
+                                    <i data-lucide="trash-2" class="w-4.5 h-4.5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 pt-4 border-t border-coffee-100">
+                            <!-- Specs -->
+                            <div class="md:col-span-6 space-y-3.5 text-xs">
+                                <div>
+                                    <span class="text-[10px] text-coffee-400 block font-bold tracking-wider uppercase">焙煎日 (Roast Date)</span>
+                                    <div class="flex items-center text-coffee-700 font-bold mt-1">
+                                        <i data-lucide="calendar" class="w-4 h-4 mr-1.5 text-coffee-500"></i>
+                                        <span id="detail-roast-date" class="font-mono text-sm">2026/05/25</span>
+                                        <span id="detail-days-ago" class="ml-1.5 text-[10px] font-normal text-coffee-400">(7日前)</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-coffee-400 block font-bold tracking-wider uppercase">推奨抽出 / 挽き方</span>
+                                    <div class="flex items-center text-coffee-700 font-bold mt-1">
+                                        <i data-lucide="settings-2" class="w-4 h-4 mr-1.5 text-coffee-500"></i>
+                                        <span id="detail-grind">中挽き (Medium Grind)</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-coffee-400 block font-bold tracking-wider uppercase">ガス抜き・エイジングステータス</span>
+                                    <div class="mt-1" id="detail-aging-status-badge">
+                                        <!-- Dynamic Aging Badge -->
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-coffee-400 block font-bold tracking-wider uppercase">詳細メモ</span>
+                                    <p id="detail-notes" class="text-coffee-600 bg-coffee-50/70 p-3 rounded-xl leading-relaxed mt-1 border border-coffee-100 italic">
+                                        チョコレートのような甘みと、上品なシトラス系の酸味。
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Radar Chart -->
+                            <div class="md:col-span-6 flex flex-col items-center justify-center bg-coffee-50/50 p-4 rounded-xl border border-coffee-100">
+                                <span class="text-[10px] text-coffee-500 font-bold mb-2 uppercase tracking-wider">テイストプロファイル</span>
+                                <div class="w-full max-w-[180px] h-[180px]">
+                                    <canvas id="tasteChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Label Builder Area -->
+                    <div class="bg-white p-5 md:p-6 rounded-2xl border border-coffee-200 shadow-sm flex flex-col space-y-5">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-coffee-100 pb-3 gap-2">
+                            <h3 class="font-bold text-coffee-800 text-base flex items-center">
+                                <i data-lucide="printer" class="w-5 h-5 mr-2 text-coffee-600"></i>
+                                スマートラベル印刷
+                            </h3>
+                            <!-- Label Size Selector -->
+                            <div class="flex items-center space-x-2">
+                                <label class="text-[11px] text-coffee-500 font-bold whitespace-nowrap">テープ規格:</label>
+                                <select id="label-size-select" onchange="changeLabelStyle()" class="text-xs bg-coffee-50 border border-coffee-200 rounded-lg p-1.5 font-bold text-coffee-700 focus:outline-none">
+                                    <option value="62x62" selected>62mm × 62mm (キャニスター正面用)</option>
+                                    <option value="62x29">62mm × 29mm (小型キャニスター用)</option>
+                                    <option value="62x90">62mm × 90mm (長方形・食品表示)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Label Theme Selector -->
+                        <div class="flex items-center space-x-3 text-xs">
+                            <span class="font-bold text-coffee-500">デザインテーマ:</span>
+                            <div class="flex space-x-1.5">
+                                <button onclick="setTheme('front')" id="btn-theme-front" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-700 bg-coffee-700 text-white shadow-sm">表ラベル</button>
+                                <button onclick="setTheme('modern')" id="btn-theme-modern" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">Modern</button>
+                                <button onclick="setTheme('package')" id="btn-theme-package" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">裏ラベル</button>
+                            </div>
+                        </div>
+
+                        <div id="qr-settings" class="hidden bg-coffee-50 border border-coffee-200 rounded-xl p-3 space-y-2">
+                            <label for="public-url-input" class="block text-[11px] font-black text-coffee-700">QR Link URL (GitHub Pages)</label>
+                            <div class="flex flex-col md:flex-row gap-2">
+                                <input id="public-url-input" type="url" placeholder="https://username.github.io/repository/" class="flex-1 text-xs bg-white border border-coffee-200 rounded-lg px-3 py-2 font-bold text-coffee-800 focus:outline-none focus:border-coffee-600">
+                                <button type="button" onclick="savePublicUrl()" class="text-xs font-black bg-coffee-800 hover:bg-coffee-900 text-white rounded-lg px-4 py-2">Save</button>
+                            </div>
+                            <p id="qr-payload-note" class="text-[10px] font-bold text-coffee-500">Set your GitHub Pages URL to make phone scans open this app.</p>
+                        </div>
+
+                        <!-- The Live Label Render Area -->
+                        <div class="flex justify-center bg-stone-100 p-4 md:p-8 rounded-xl border-2 border-dashed border-coffee-200 relative overflow-hidden">
+                            
+                            <!-- Label Content Container -->
+                            <div id="printable-label-area" class="bg-white text-black shadow-md border border-gray-300 relative font-sans transition-all duration-300" style="width: 320px; height: 320px; box-sizing: border-box;">
+                                
+                                <!-- Label Outer Frame -->
+                                <div id="label-design-frame" class="w-full h-full p-4 flex flex-col justify-between border-4 border-double border-black select-none">
+                                    
+                                    <!-- Header / Origin -->
+                                    <div class="text-center">
+                                        <div id="lbl-origin" class="text-[11px] tracking-[0.2em] uppercase font-bold text-gray-800 border-b border-black pb-0.5 inline-block min-w-[50%]">GUATEMALA</div>
+                                    </div>
+
+                                    <!-- Middle Section -->
+                                    <div class="text-center my-auto flex flex-col items-center justify-center">
+                                        <h4 id="lbl-name" class="text-base font-black tracking-tight leading-tight max-w-full truncate px-1">アンティグア SHB</h4>
+                                        <div class="flex items-center justify-center space-x-1.5 mt-1">
+                                            <span id="lbl-roast" class="text-[9px] bg-black text-white px-1 py-0.2 rounded font-bold">やや深煎り</span>
+                                            <span id="lbl-grind" class="text-[9px] border border-black px-1 py-0.2 rounded font-bold">中挽き</span>
+                                        </div>
+                                        <span id="lbl-process" class="hidden"></span>
+                                    </div>
+
+                                    <!-- Bottom Area: Roast Date & QR Code -->
+                                    <div id="label-bottom-area" class="flex items-end justify-between pt-2 border-t border-gray-400">
+                                        <div id="label-date-block" class="text-left leading-tight pb-4">
+                                            <span class="text-[8px] uppercase text-gray-500 block">Roast Date</span>
+                                            <span id="lbl-roast-date" class="text-xs font-bold font-mono">2026.05.25</span>
+                                            
+                                            <!-- Simple aging advisory code on label -->
+                                            <div class="mt-1 flex items-center">
+                                                <div class="w-1.5 h-1.5 rounded-full bg-black mr-1"></div>
+                                                <span id="lbl-aging-indicator" class="text-[8px] font-bold">飲み頃: 焙煎後+5日</span>
+                                            </div>
+                                            <span id="lbl-best-before" class="mt-1 block text-[8px] font-bold">賞味目安: -</span>
+                                        </div>
+                                        <!-- QR Code Canvas Container -->
+                                        <div class="flex h-[92px] w-[92px] items-center justify-center bg-white border border-black">
+                                            <canvas id="label-qr-canvas" width="96" height="96" class="w-[88px] h-[88px] block"></canvas>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                            <button onclick="downloadLabelImage()" class="flex items-center justify-center bg-coffee-100 hover:bg-coffee-200 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
+                                <i data-lucide="download" class="w-4 h-4 mr-1.5"></i>
+                                PNGをダウンロード (300dpi・白黒)
+                            </button>
+                            
+                            <button onclick="printCurrentLabel()" class="flex items-center justify-center bg-coffee-800 hover:bg-coffee-900 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md">
+                                <i data-lucide="printer" class="w-4 h-4 mr-1.5"></i>
+                                PC/ブラウザからダイレクト印刷
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Placeholder -->
+                <div id="detail-placeholder" class="bg-white p-12 rounded-2xl border border-coffee-200 shadow-sm text-center flex flex-col items-center justify-center min-h-[400px]">
+                    <div class="bg-coffee-100 p-4 rounded-full text-coffee-600 mb-4 animate-pulse">
+                        <i data-lucide="coffee" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-base text-coffee-800 mb-1">コーヒー豆を選択してください</h3>
+                    <p class="text-xs text-coffee-500 max-w-sm leading-relaxed">
+                        左側のインベントリ一覧から豆を選ぶか、「新規登録」ボタンを押して新しく購入した豆を追加してください。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- App Bottom Nav for Mobile view convenience (No Print) -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-coffee-200 px-6 py-2 flex justify-around items-center md:hidden z-40 no-print">
+        <button onclick="openAddModal()" class="flex flex-col items-center text-coffee-500 hover:text-coffee-800">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold mt-0.5">新規追加</span>
+        </button>
+        <button onclick="exportData()" class="flex flex-col items-center text-coffee-500 hover:text-coffee-800">
+            <i data-lucide="download" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold mt-0.5">データ出力</span>
+        </button>
+    </div>
+
+    <!-- Add/Edit Modal (No Print) -->
+    <div id="bean-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden no-print">
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-coffee-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-coffee-50 border-b border-coffee-100 flex items-center justify-between">
+                <h3 id="modal-title" class="text-sm font-bold text-coffee-800 flex items-center">
+                    <i data-lucide="file-edit" class="w-4.5 h-4.5 mr-2 text-coffee-600"></i>
+                    コーヒー豆の登録
+                </h3>
+                <button onclick="closeModal()" class="p-1.5 text-coffee-400 hover:text-coffee-600 rounded-lg hover:bg-coffee-100 transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form id="bean-form" onsubmit="saveBean(event)" class="p-6 overflow-y-auto space-y-4">
+                <input type="hidden" id="form-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Display Name -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-coffee-600 mb-1">表示名 *</label>
+                        <input type="text" id="form-name" required placeholder="例: オブリゴン / ふかいりブレンド" class="w-full px-3 py-2 border border-coffee-200 rounded-xl text-xs focus:ring-2 focus:ring-coffee-500 focus:outline-none">
+                    </div>
+                    <!-- Origin -->
+                    <div class="md:col-span-2">
+                        <label class="block text-[11px] font-bold text-coffee-600 mb-1">生産国 *</label>
+                        <input type="hidden" id="form-origin">
+                        <p class="mb-1 text-[10px] font-bold text-coffee-400">選択順 = 配合率順 / 最大3か国</p>
+                        <div id="country-chip-grid" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <!-- Roast Level -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-coffee-600 mb-1">焙煎度</label>
+                        <select id="form-roast" class="w-full px-3 py-2 border border-coffee-200 rounded-xl text-xs focus:ring-2 focus:ring-coffee-500 focus:outline-none bg-white">
+                            <option value="浅煎り">浅煎り (Light Roast)</option>
+                            <option value="やや浅煎り">やや浅煎り (Medium Light)</option>
+                            <option value="中煎り">中煎り (Medium Roast)</option>
+                            <option value="やや深煎り" selected>やや深煎り (Medium Dark)</option>
+                            <option value="深煎り">深煎り (Dark Roast)</option>
+                        </select>
+                    </div>
+                    <!-- Process -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-coffee-600 mb-1">精製方法</label>
+                        <select id="form-process" class="w-full px-3 py-2 border border-coffee-200 rounded-xl text-xs focus:ring-2 focus:ring-coffee-500 focus:outline-none bg-white">
+                            <option value="">未設定</option>
+                            <option value="N">N: ナチュラル</option>
+                            <option value="W">W: ウォッシュト</option>
+                            <option value="A">A: アナエロビック</option>
+                            <option value="H">H: ハニー</option>
+                        </select>
+                    </div>
+                    <!-- Roast Date -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-coffee-600 mb-1">焙煎日 *</label>
+                        <input type="date" id="form-roast-date" class="w-full px-3 py-2 border border-coffee-200 rounded-xl text-xs focus:ring-2 focus:ring-coffee-500 focus:outline-none">
+                    </div>
+                    <!-- Grind -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-coffee-600 mb-1">推奨グラインド</label>
+                        <select id="form-grind" class="w-full px-3 py-2 border border-coffee-200 rounded-xl text-xs focus:ring-2 focus:ring-coffee-500 focus:outline-none bg-white">
+                            <option value="豆のまま" selected>豆のまま (Whole)</option>
+                            <option value="極細挽き">極細挽き (Espresso)</option>
+                            <option value="細挽き">細挽き (Drip Fine)</option>
+                            <option value="中挽き">中挽き (Drip Medium)</option>
+                            <option value="粗挽き">粗挽き (Coarse)</option>
+                        </select>
+                    </div>
+                    <!-- Weight -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-coffee-600 mb-1">内容量</label>
+                        <select id="form-weight" class="w-full px-3 py-2 border border-coffee-200 rounded-xl text-xs focus:ring-2 focus:ring-coffee-500 focus:outline-none bg-white">
+                            <option value="50g">50g</option>
+                            <option value="100g">100g</option>
+                            <option value="150g">150g</option>
+                            <option value="200g">200g</option>
+                            <option value="250g" selected>250g</option>
+                            <option value="300g">300g</option>
+                            <option value="500g">500g</option>
+                            <option value="1kg">1kg</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Taste Profile (0-5 sliders) -->
+                <div class="bg-coffee-50 p-4 rounded-xl border border-coffee-100 space-y-3">
+                    <h4 class="text-[11px] font-black text-coffee-700 tracking-wider uppercase border-b border-coffee-200 pb-1.5 flex items-center">
+                        <i data-lucide="activity" class="w-4 h-4 mr-1"></i>
+                        フレーバープロファイル (0〜5)
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-coffee-600 mb-1">
+                                <span>酸味 (Acid)</span>
+                                <span id="val-sour" class="font-bold">3</span>
+                            </div>
+                            <input type="range" id="form-sour" min="0" max="5" step="0.5" value="3" oninput="document.getElementById('val-sour').textContent=this.value" class="w-full accent-coffee-700">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-coffee-600 mb-1">
+                                <span>苦味 (Bitter)</span>
+                                <span id="val-bitter" class="font-bold">3</span>
+                            </div>
+                            <input type="range" id="form-bitter" min="0" max="5" step="0.5" value="3" oninput="document.getElementById('val-bitter').textContent=this.value" class="w-full accent-coffee-700">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-coffee-600 mb-1">
+                                <span>甘み (Sweet)</span>
+                                <span id="val-sweet" class="font-bold">3</span>
+                            </div>
+                            <input type="range" id="form-sweet" min="0" max="5" step="0.5" value="3" oninput="document.getElementById('val-sweet').textContent=this.value" class="w-full accent-coffee-700">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-coffee-600 mb-1">
+                                <span>コク (Body)</span>
+                                <span id="val-body" class="font-bold">3</span>
+                            </div>
+                            <input type="range" id="form-body" min="0" max="5" step="0.5" value="3" oninput="document.getElementById('val-body').textContent=this.value" class="w-full accent-coffee-700">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-coffee-600 mb-1">
+                                <span>香り (Aroma)</span>
+                                <span id="val-aroma" class="font-bold">3</span>
+                            </div>
+                            <input type="range" id="form-aroma" min="0" max="5" step="0.5" value="3" oninput="document.getElementById('val-aroma').textContent=this.value" class="w-full accent-coffee-700">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes / Recipes -->
+                <div>
+                    <label class="block text-[11px] font-bold text-coffee-600 mb-1">詳細メモ / 抽出レシピ</label>
+                    <textarea id="form-notes" rows="3" placeholder="例: 地域、農園、ロット、農家、WS、品種、抽出メモなど" class="w-full px-3 py-2 border border-coffee-200 rounded-xl text-xs focus:ring-2 focus:ring-coffee-500 focus:outline-none"></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end space-x-2 pt-4 border-t border-coffee-100">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-coffee-200 text-coffee-600 hover:bg-coffee-50 rounded-xl text-xs font-bold transition-all">キャンセル</button>
+                    <button type="submit" class="px-5 py-2 bg-coffee-700 hover:bg-coffee-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm">インベントリに保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script>
+        // Mock Coffee Data (Only populated if first-time user)
+        const defaultBeans = [
+            {
+                id: "1",
+                name: "エチオピア イルガチェフェ G1",
+                origin: "ETHIOPIA",
+                countries: ["ETHIOPIA"],
+                roast: "浅煎り",
+                roastDate: "2026-05-28", // Context Date: 2026-06-01
+                grind: "豆のまま",
+                weight: "250g",
+                sour: 4.5,
+                bitter: 1.5,
+                sweet: 3.5,
+                body: 2.0,
+                aroma: 4.8,
+                notes: "ジャスミンのような華やかなアロマと、レモンティーを思わせる軽やかで透き通る酸味。朝の一杯に最適。"
+            },
+            {
+                id: "2",
+                name: "アンティグア SHB",
+                origin: "GUATEMALA",
+                countries: ["GUATEMALA"],
+                roast: "やや深煎り",
+                roastDate: "2026-05-25",
+                grind: "中挽き",
+                weight: "250g",
+                sour: 2.5,
+                bitter: 3.5,
+                sweet: 4.0,
+                body: 4.0,
+                aroma: 3.8,
+                notes: "ダークチョコレートを溶かしたような甘みと重厚感。後味にほのかにビターオレンジのような柑橘感が香ります。"
+            }
+        ];
+
+        let beans = [];
+        let selectedBeanId = null;
+        let activeTheme = 'front';
+        let tasteChartInstance = null;
+        let qrInstance = null;
+        const PUBLIC_APP_URL = '';
+        const PUBLIC_APP_URL_KEY = 'roastlog_public_app_url';
+        const FRONT_LOGO_SOURCE = 'ChatGPT Image 2026年6月4日 09_28_46.png';
+        const FRONT_LOGO_DATA_URL = 'data:image/png;base64,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';
+        let frontLogoImagePromise = null;
+        const P_TOUCH_DPI = 300;
+        const COUNTRY_OPTIONS = [
+            { name: 'ETHIOPIA', code: 'ETH', aliases: ['ETHIOPIA', 'エチオピア', 'ｲﾙｶﾞﾁｪﾌｪ', 'イルガチェフェ', 'YIRGACHEFFE', 'SIDAMO', 'シダモ'] },
+            { name: 'GUATEMALA', code: 'GUA', aliases: ['GUATEMALA', 'グアテマラ', 'ｸﾞｱﾃﾏﾗ', 'ANTIGUA', 'アンティグア'] },
+            { name: 'BRAZIL', code: 'BRA', aliases: ['BRAZIL', 'ブラジル', 'ﾌﾞﾗｼﾞﾙ'] },
+            { name: 'COLOMBIA', code: 'COL', aliases: ['COLOMBIA', 'COLUMBIA', 'コロンビア', 'ｺﾛﾝﾋﾞｱ'] },
+            { name: 'KENYA', code: 'KEN', aliases: ['KENYA', 'ケニア', 'ｹﾆｱ'] },
+            { name: 'TANZANIA', code: 'TAN', aliases: ['TANZANIA', 'タンザニア', 'ﾀﾝｻﾞﾆｱ', 'KILIMANJARO', 'キリマンジャロ'] },
+            { name: 'INDIA', code: 'IND', aliases: ['INDIA', 'インド', 'ｲﾝﾄﾞ', 'MONSOONED MALABAR', 'MALABAR', 'モンスーン', 'マラバール'] },
+            { name: 'INDONESIA', code: 'IDN', aliases: ['INDONESIA', 'インドネシア', 'マンデリン', 'MANDHELING', 'SUMATRA'] },
+            { name: 'COSTA RICA', code: 'CRI', aliases: ['COSTA RICA', 'コスタリカ', 'ｺｽﾀﾘｶ'] },
+            { name: 'EL SALVADOR', code: 'SLV', aliases: ['EL SALVADOR', 'エルサルバドル'] },
+            { name: 'HONDURAS', code: 'HON', aliases: ['HONDURAS', 'ホンジュラス'] },
+            { name: 'NICARAGUA', code: 'NIC', aliases: ['NICARAGUA', 'ニカラグア'] },
+            { name: 'PANAMA', code: 'PAN', aliases: ['PANAMA', 'パナマ'] },
+            { name: 'MEXICO', code: 'MEX', aliases: ['MEXICO', 'メキシコ'] },
+            { name: 'PERU', code: 'PER', aliases: ['PERU', 'ペルー'] },
+            { name: 'BOLIVIA', code: 'BOL', aliases: ['BOLIVIA', 'ボリビア'] },
+            { name: 'RWANDA', code: 'RWA', aliases: ['RWANDA', 'ルワンダ'] },
+            { name: 'BURUNDI', code: 'BDI', aliases: ['BURUNDI', 'ブルンジ'] },
+            { name: 'YEMEN', code: 'YEM', aliases: ['YEMEN', 'イエメン'] },
+            { name: 'JAMAICA', code: 'JAM', aliases: ['JAMAICA', 'ジャマイカ', 'BLUE MOUNTAIN', 'ブルーマウンテン'] }
+        ];
+        let selectedCountries = [];
+
+        function getPublicAppUrl() {
+            return (localStorage.getItem(PUBLIC_APP_URL_KEY) || PUBLIC_APP_URL || '').trim();
+        }
+
+        function normalizePublicUrl(url) {
+            return url.trim().replace(/\/+$/, '');
+        }
+
+        function getQrPayload(bean) {
+            const publicUrl = getPublicAppUrl();
+            if (publicUrl) {
+                return `${normalizePublicUrl(publicUrl)}/#bean-${bean.id}`;
+            }
+
+            if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                const baseUrl = window.location.origin + window.location.pathname;
+                return `${baseUrl}#bean-${bean.id}`;
+            }
+
+            return `ROASTLOG:${bean.id}`;
+        }
+
+        function updateQrPayloadNote(bean) {
+            const input = document.getElementById('public-url-input');
+            const note = document.getElementById('qr-payload-note');
+            if (!input || !note || !bean) return;
+
+            input.value = getPublicAppUrl();
+            const payload = getQrPayload(bean);
+            if (payload.startsWith('http')) {
+                note.textContent = `QR opens: ${payload}`;
+                note.className = 'text-[10px] font-bold text-green-700 break-all';
+            } else {
+                note.textContent = 'Local preview only. Set your GitHub Pages URL so phone scans can open the app.';
+                note.className = 'text-[10px] font-bold text-red-700';
+            }
+        }
+
+        function savePublicUrl() {
+            const input = document.getElementById('public-url-input');
+            const value = normalizePublicUrl(input.value);
+            if (value && !/^https?:\/\//i.test(value)) {
+                showToast('URLは https:// から入力してください', 'error');
+                return;
+            }
+
+            localStorage.setItem(PUBLIC_APP_URL_KEY, value);
+            const bean = beans.find(b => b.id === selectedBeanId);
+            if (bean) {
+                generateLabelQR(bean);
+                updateQrPayloadNote(bean);
+            }
+            showToast(value ? 'QRリンクURLを保存しました' : 'QRリンクURLをクリアしました', 'success');
+        }
+
+        function textOrDash(value) {
+            return value && String(value).trim() ? String(value).trim() : '-';
+        }
+
+        function normalizeCountrySource(value) {
+            return String(value || '')
+                .toUpperCase()
+                .replace(/[Ａ-Ｚａ-ｚ０-９]/g, char => String.fromCharCode(char.charCodeAt(0) - 0xFEE0))
+                .replace(/[・ー_\-/.,()（）]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function normalizeCountryNames(countries) {
+            if (!Array.isArray(countries)) return [];
+            return countries
+                .map(country => COUNTRY_OPTIONS.find(option => option.name === country)?.name)
+                .filter(Boolean)
+                .slice(0, 3);
+        }
+
+        function inferCountriesFromOrigin(origin) {
+            const normalized = normalizeCountrySource(origin);
+            if (!normalized) return [];
+            return COUNTRY_OPTIONS
+                .map(option => {
+                    const hitIndexes = option.aliases
+                        .map(alias => normalized.indexOf(alias.toUpperCase()))
+                        .filter(index => index >= 0);
+                    return hitIndexes.length ? { name: option.name, index: Math.min(...hitIndexes) } : null;
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.index - b.index)
+                .map(country => country.name)
+                .slice(0, 3);
+        }
+
+        function beanCountryNames(bean) {
+            const storedCountries = normalizeCountryNames(bean?.countries);
+            return storedCountries.length ? storedCountries : inferCountriesFromOrigin(bean?.origin);
+        }
+
+        function beanOriginText(bean) {
+            const countries = beanCountryNames(bean);
+            return countries.length ? originTextFromCountries(countries) : textOrDash(bean?.origin);
+        }
+
+        function countryDisplayText(countries, fallback = 'ORIGIN') {
+            const normalizedCountries = normalizeCountryNames(countries);
+            if (normalizedCountries.length === 0) return fallback;
+            if (normalizedCountries.length <= 2) return normalizedCountries.join(' / ');
+            return normalizedCountries
+                .map(country => COUNTRY_OPTIONS.find(option => option.name === country)?.code || country.slice(0, 3))
+                .join(' / ');
+        }
+
+        function originTextFromCountries(countries) {
+            return normalizeCountryNames(countries).join(' / ');
+        }
+
+        function modernOriginText(bean) {
+            const countries = beanCountryNames(bean);
+            if (countries.length) return countryDisplayText(countries);
+            const normalized = normalizeCountrySource(bean?.origin);
+            return normalized || 'ORIGIN';
+        }
+
+        function setPrintDimensions(container, size) {
+            const heights = { '62x29': '29mm', '62x62': '62mm', '62x90': '90mm' };
+            container.style.setProperty('--print-width', '62mm');
+            container.style.setProperty('--print-height', heights[size] || '62mm');
+        }
+
+        function labelWeightText(bean) {
+            if (bean.weight) return bean.weight;
+            const match = `${bean.notes || ''}`.match(/(?:内容量|容量|量|weight)\s*[:：]?\s*([0-9０-９]+)\s*g/i);
+            return match ? `${match[1]}g` : '250g';
+        }
+
+        function ingredientText(bean) {
+            const origin = beanOriginText(bean);
+            return origin === '-' ? 'コーヒー豆' : `コーヒー豆(${origin})`;
+        }
+
+        function bestBeforeText(bean) {
+            if (!hasRoastDate(bean)) return '焙煎後に入力';
+            const date = new Date(bean.roastDate + 'T00:00:00');
+            if (Number.isNaN(date.getTime())) return '焙煎後に入力';
+            date.setMonth(date.getMonth() + 3);
+            return date.toISOString().slice(0, 10).replace(/-/g, '.');
+        }
+
+        function hasRoastDate(beanOrDate) {
+            const value = typeof beanOrDate === 'string' ? beanOrDate : beanOrDate?.roastDate;
+            return Boolean(String(value || '').trim());
+        }
+
+        function roastDateText(beanOrDate, separator = '.') {
+            const value = typeof beanOrDate === 'string' ? beanOrDate : beanOrDate?.roastDate;
+            if (!hasRoastDate(value)) return '未焙煎';
+            const date = new Date(`${value}T00:00:00`);
+            if (Number.isNaN(date.getTime())) return '焙煎日未入力';
+            return String(value).replace(/-/g, separator);
+        }
+
+        function agingIndicatorText(bean) {
+            if (!hasRoastDate(bean)) return '焙煎後に入力';
+            let baseAgingDays = 5;
+            if (bean.roast === '深煎り') baseAgingDays = 7;
+            if (bean.roast === '浅煎り') baseAgingDays = 3;
+            return `飲み頃: 焙煎後+${baseAgingDays}日`;
+        }
+
+        function packageMemo(bean) {
+            const base = textOrDash(bean.notes);
+            if (base === '-') {
+                return '焙煎後は密閉容器に移し、できるだけ早めにお楽しみください。';
+            }
+            return base;
+        }
+
+        function truncateText(value, maxChars) {
+            const text = String(value || '').replace(/\s+/g, ' ').trim();
+            return text.length > maxChars ? `${text.slice(0, maxChars - 1)}…` : text;
+        }
+
+        function tasteItems(bean) {
+            return [
+                ['酸味', Number(bean.sour || 0)],
+                ['苦味', Number(bean.bitter || 0)],
+                ['甘み', Number(bean.sweet || 0)],
+                ['コク', Number(bean.body || 0)],
+                ['香り', Number(bean.aroma || 0)]
+            ];
+        }
+
+        function beanRatingHtml(value) {
+            const filled = Math.max(0, Math.min(5, Math.round(value)));
+            return Array.from({ length: 5 }, (_, index) => {
+                const isFilled = index < filled;
+                return `
+                    <svg viewBox="0 0 34 24" class="inline-block h-[10px] w-[14px]" aria-hidden="true">
+                        <ellipse cx="17" cy="12" rx="12.5" ry="7.5" transform="rotate(22 17 12)" fill="${isFilled ? '#000' : '#fff'}" stroke="#000" stroke-width="2.4"/>
+                        <path d="M10 7 C13 11 18 11 24 17" fill="none" stroke="${isFilled ? '#fff' : '#000'}" stroke-width="2.2" stroke-linecap="round"/>
+                    </svg>`;
+            }).join('');
+        }
+
+        function tasteBeansHtml(bean) {
+            return tasteItems(bean).map(([label, value]) => `
+                <div class="flex items-center gap-1 leading-none">
+                    <span class="w-7 text-[10px] font-black tracking-normal">${escapeHtml(label)}</span>
+                    <span class="flex gap-0.5">${beanRatingHtml(value)}</span>
+                </div>
+            `).join('');
+        }
+
+        function memoCupIconSvg() {
+            return `
+                <svg viewBox="0 0 28 20" class="mt-[2px] h-4 w-5 shrink-0" aria-hidden="true">
+                    <path d="M5 7 H17 V12.5 C17 15.2 14.8 17 11 17 C7.2 17 5 15.2 5 12.5 Z" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M17 8 H20.5 C22.4 8 23.5 9.1 23.5 10.7 C23.5 12.5 22.1 13.6 19.8 13.4 H17" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M4 18 H21" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 3 C7.3 4 7.3 5 8 6 M12 3 C11.3 4 11.3 5 12 6 M16 3 C15.3 4 15.3 5 16 6" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>`;
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function roastTone(bean) {
+            const roast = String(bean?.roast || '').toLowerCase();
+            if (roast.includes('浅') || roast.includes('light')) return 'light';
+            if (roast.includes('深') || roast.includes('dark') || roast.includes('french') || roast.includes('italian')) return 'dark';
+            return 'medium';
+        }
+
+        function roastToneLabel(tone) {
+            if (tone === 'light') return '浅煎り';
+            if (tone === 'dark') return '深煎り';
+            return '中煎り';
+        }
+
+        function roastLevelInfo(roast) {
+            const value = String(roast || '').toLowerCase();
+            if (value.includes('やや浅') || value.includes('medium light')) return { label: 'やや浅煎り', value: 2 };
+            if (value.includes('やや深') || value.includes('中深') || value.includes('city')) return { label: 'やや深煎り', value: 4 };
+            if (value.includes('浅') || value.includes('light')) return { label: '浅煎り', value: 1 };
+            if (value.includes('深') || value.includes('dark') || value.includes('french') || value.includes('italian')) return { label: '深煎り', value: 5 };
+            return { label: '中煎り', value: 3 };
+        }
+
+        function processCode(bean) {
+            const value = String(bean?.process || '').trim().toLowerCase();
+            if (value === 'n' || value.includes('natural') || value.includes('ナチュラル')) return 'N';
+            if (value === 'w' || value.includes('washed') || value.includes('ウォッシュ')) return 'W';
+            if (value === 'a' || value.includes('anaerobic') || value.includes('アナエロ')) return 'A';
+            if (value === 'h' || value.includes('honey') || value.includes('ハニー')) return 'H';
+            return '';
+        }
+
+        function processLabel(bean) {
+            return {
+                N: 'ナチュラル',
+                W: 'ウォッシュト',
+                A: 'アナエロビック',
+                H: 'ハニー'
+            }[processCode(bean)] || '-';
+        }
+
+        function roastColorClass(roast) {
+            const level = roastLevelInfo(roast).value;
+            return ['bg-amber-400', 'bg-amber-500', 'bg-amber-600', 'bg-amber-800', 'bg-stone-900'][level - 1];
+        }
+
+        function frontOwlLogoHtml() {
+            return `<img src="${FRONT_LOGO_DATA_URL}" alt="コーヒー豆とフクロウのロゴ" class="h-full w-full object-contain">`;
+        }
+
+        function frontRoastBeansHtml(roastValue) {
+            return Array.from({ length: 5 }, (_, index) => {
+                const filled = index < roastValue;
+                return `
+                    <svg viewBox="0 0 34 24" class="inline-block h-[16px] w-[22px]" aria-hidden="true">
+                        <ellipse cx="17" cy="12" rx="12.5" ry="7.5" transform="rotate(22 17 12)" fill="${filled ? '#000' : '#fff'}" stroke="#000" stroke-width="2.4"/>
+                        <path d="M10 7 C13 11 18 11 24 17" fill="none" stroke="${filled ? '#fff' : '#000'}" stroke-width="2.2" stroke-linecap="round"/>
+                    </svg>`;
+            }).join('');
+        }
+
+        function frontRoastLevelHtml(roast, compact = false) {
+            const labelSize = compact ? 'text-[14px]' : 'text-[15px]';
+            const gap = compact ? 'gap-1' : 'gap-1.5';
+            return `
+                <div class="flex items-center justify-center ${gap} whitespace-nowrap">
+                    <span class="${labelSize} font-black leading-none">${escapeHtml(roast.label)}：</span>
+                    <span class="flex items-center gap-1">${frontRoastBeansHtml(roast.value)}</span>
+                </div>`;
+        }
+
+        function frontOriginHtml(bean, compact = false) {
+            const size = compact ? 'text-[11px]' : 'text-[12px]';
+            const spacing = compact ? 'tracking-[0.12em]' : 'tracking-[0.16em]';
+            return `<div class="${size} ${spacing} font-black uppercase leading-none">${escapeHtml(modernOriginText(bean))}</div>`;
+        }
+
+        function fitFrontPreviewName(frame, startSize, minSize) {
+            const name = frame.querySelector('[data-front-name]');
+            if (!name) return;
+            let size = startSize;
+            name.style.fontSize = `${size}px`;
+            while ((name.scrollWidth > name.clientWidth || name.scrollHeight > name.clientHeight) && size > minSize) {
+                size -= 1;
+                name.style.fontSize = `${size}px`;
+            }
+        }
+
+        function frontSpeechBubbleHtml(bean, compact, tall) {
+            const padding = compact ? 'px-3 py-2' : tall ? 'px-5 py-3.5' : 'px-4 py-2.5';
+            const size = compact ? 'text-[14px]' : tall ? 'text-[22px]' : 'text-[17px]';
+            return `
+                <div class="relative w-full rounded-[12px] border-[2.5px] border-black bg-white ${padding}">
+                    <h4 data-front-name class="w-full break-words ${size} font-bold leading-snug tracking-wide [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">${escapeHtml(textOrDash(bean.name))}</h4>
+                    <span class="absolute -bottom-[8px] right-[18%] h-[14px] w-[14px] rotate-45 border-b-[2.5px] border-r-[2.5px] border-black bg-white"></span>
+                </div>`;
+        }
+
+        function beanSvg(cx, cy, rx, ry, rotate, tone, seamPath) {
+            const transform = `rotate(${rotate} ${cx} ${cy})`;
+            const hatch = tone === 'medium'
+                ? `<g transform="${transform}" stroke="#000" stroke-width="2" stroke-linecap="round">
+                    <path d="M${cx - rx * 0.65} ${cy + ry * 0.28} L${cx + rx * 0.05} ${cy - ry * 0.52}"/>
+                    <path d="M${cx - rx * 0.2} ${cy + ry * 0.55} L${cx + rx * 0.55} ${cy - ry * 0.25}"/>
+                  </g>`
+                : '';
+            const fill = tone === 'dark' ? '#000' : '#fff';
+            const seamColor = tone === 'dark' ? '#fff' : '#000';
+            return `
+                <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="${transform}" fill="${fill}" stroke="#000" stroke-width="4"/>
+                ${hatch}
+                <path d="${seamPath}" fill="none" stroke="${seamColor}" stroke-width="3" stroke-linecap="round"/>`;
+        }
+
+        function packageMarkSvg(type, tone = 'medium') {
+            if (type === 'sprout') {
+                return `
+                    <svg viewBox="0 0 120 56" class="mx-auto h-12 w-28" aria-hidden="true">
+                        <path d="M60 48 C52 34 54 20 60 8 C66 20 68 34 60 48 Z" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+                        ${beanSvg(42, 30, 21, 13, -24, tone, 'M36 33 C43 28 48 25 55 23')}
+                        ${beanSvg(78, 30, 21, 13, 24, tone, 'M84 33 C77 28 72 25 65 23')}
+                    </svg>`;
+            }
+            if (type === 'curve') {
+                const fill = tone === 'dark' ? '#000' : '#fff';
+                const seamColor = tone === 'dark' ? '#fff' : '#000';
+                const hatch = tone === 'medium'
+                    ? '<path d="M33 42 L55 14 M55 47 L79 14" stroke="#000" stroke-width="2" stroke-linecap="round"/>'
+                    : '';
+                return `
+                    <svg viewBox="0 0 120 56" class="mx-auto h-12 w-28" aria-hidden="true">
+                        <ellipse cx="60" cy="28" rx="42" ry="19" fill="${fill}" stroke="#000" stroke-width="4"/>
+                        ${hatch}
+                        <path d="M37 19 C50 30 47 39 60 43 C73 39 70 30 83 19" fill="none" stroke="${seamColor}" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M22 47 H98" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+                    </svg>`;
+            }
+            return `
+                <svg viewBox="0 0 120 56" class="mx-auto h-12 w-28" aria-hidden="true">
+                    ${beanSvg(36, 32, 19, 12, -24, tone, 'M28 31 C36 28 40 25 46 21')}
+                    ${beanSvg(60, 24, 20, 13, 8, tone, 'M52 20 C61 24 65 29 69 36')}
+                    ${beanSvg(84, 33, 19, 12, 24, tone, 'M76 25 C83 30 87 34 91 41')}
+                </svg>`;
+        }
+
+        function drawBeanEllipse(ctx, x, y, rx, ry, rotation, tone = 'medium') {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+            ctx.fillStyle = tone === 'dark' ? '#000' : '#fff';
+            ctx.fill();
+            if (tone === 'medium') {
+                ctx.save();
+                ctx.beginPath();
+                ctx.ellipse(0, 0, rx - 1, ry - 1, 0, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(-rx * 0.7, ry * 0.45);
+                ctx.lineTo(rx * 0.1, -ry * 0.62);
+                ctx.moveTo(-rx * 0.18, ry * 0.62);
+                ctx.lineTo(rx * 0.68, -ry * 0.34);
+                ctx.stroke();
+                ctx.restore();
+            }
+            ctx.strokeStyle = '#000';
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-rx * 0.45, -ry * 0.35);
+            ctx.bezierCurveTo(-rx * 0.08, -ry * 0.15, rx * 0.05, ry * 0.2, rx * 0.48, ry * 0.42);
+            ctx.strokeStyle = tone === 'dark' ? '#fff' : '#000';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawPackageBeanMark(ctx, type, centerX, y, tone = 'medium') {
+            ctx.save();
+            ctx.strokeStyle = '#000';
+            ctx.fillStyle = '#000';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (type === 'sprout') {
+                ctx.beginPath();
+                ctx.moveTo(centerX, y + 70);
+                ctx.bezierCurveTo(centerX - 15, y + 40, centerX - 8, y + 20, centerX, y + 6);
+                ctx.bezierCurveTo(centerX + 8, y + 20, centerX + 15, y + 40, centerX, y + 70);
+                ctx.stroke();
+                drawBeanEllipse(ctx, centerX - 34, y + 42, 32, 19, -0.42, tone);
+                drawBeanEllipse(ctx, centerX + 34, y + 42, 32, 19, 0.42, tone);
+            } else if (type === 'curve') {
+                ctx.beginPath();
+                ctx.ellipse(centerX, y + 38, 64, 28, 0, 0, Math.PI * 2);
+                ctx.fillStyle = tone === 'dark' ? '#000' : '#fff';
+                ctx.fill();
+                if (tone === 'medium') {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, y + 38, 62, 26, 0, 0, Math.PI * 2);
+                    ctx.clip();
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX - 44, y + 58);
+                    ctx.lineTo(centerX - 8, y + 12);
+                    ctx.moveTo(centerX - 10, y + 62);
+                    ctx.lineTo(centerX + 34, y + 12);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                ctx.strokeStyle = '#000';
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(centerX - 34, y + 24);
+                ctx.bezierCurveTo(centerX - 8, y + 50, centerX + 4, y + 58, centerX + 34, y + 24);
+                ctx.strokeStyle = tone === 'dark' ? '#fff' : '#000';
+                ctx.stroke();
+                ctx.strokeStyle = '#000';
+                ctx.beginPath();
+                ctx.moveTo(centerX - 62, y + 82);
+                ctx.lineTo(centerX + 62, y + 82);
+                ctx.stroke();
+            } else {
+                drawBeanEllipse(ctx, centerX - 42, y + 48, 30, 19, -0.42, tone);
+                drawBeanEllipse(ctx, centerX, y + 28, 32, 20, 0.12, tone);
+                drawBeanEllipse(ctx, centerX + 42, y + 50, 30, 19, 0.42, tone);
+            }
+            ctx.restore();
+        }
+
+        function drawWrappedCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+            const chars = Array.from(String(text || ''));
+            let line = '';
+            let lines = 0;
+            for (const char of chars) {
+                const testLine = line + char;
+                if (ctx.measureText(testLine).width > maxWidth && line) {
+                    if (lines === maxLines - 1) {
+                        let clipped = line;
+                        while (ctx.measureText(`${clipped}…`).width > maxWidth && clipped.length > 0) {
+                            clipped = clipped.slice(0, -1);
+                        }
+                        ctx.fillText(`${clipped}…`, x, y + lines * lineHeight);
+                        return;
+                    }
+                    ctx.fillText(line, x, y + lines * lineHeight);
+                    line = char;
+                    lines++;
+                    if (lines >= maxLines) return;
+                } else {
+                    line = testLine;
+                }
+            }
+            if (line && lines < maxLines) ctx.fillText(line, x, y + lines * lineHeight);
+        }
+
+        function drawTinyBean(ctx, x, y, filled) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(0.38);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
+            ctx.fillStyle = filled ? '#000' : '#fff';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-6, -3.5);
+            ctx.bezierCurveTo(-3, 1, 2, -0.5, 6, 3.5);
+            ctx.strokeStyle = filled ? '#fff' : '#000';
+            ctx.lineWidth = 1.7;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawFrontRoastBean(ctx, x, y, filled) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(0.38);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 15, 9, 0, 0, Math.PI * 2);
+            ctx.fillStyle = filled ? '#000' : '#fff';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-9, -5);
+            ctx.bezierCurveTo(-4, 1.5, 3, -1, 9, 5);
+            ctx.strokeStyle = filled ? '#fff' : '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawFrontRoastLevel(ctx, roast, centerX, y, compact = false) {
+            ctx.save();
+            const fontSize = compact ? 22 : 24;
+            const beanSpacing = compact ? 32 : 36;
+            const beanWidth = 30;
+            const gap = compact ? 8 : 12;
+            const label = `${roast.label}：`;
+            ctx.font = `700 ${fontSize}px "Noto Sans JP", sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#000';
+            const labelWidth = ctx.measureText(label).width;
+            const beansWidth = beanWidth + beanSpacing * 4;
+            const startX = centerX - (labelWidth + gap + beansWidth) / 2;
+            ctx.fillText(label, startX, y);
+            const beansStartX = startX + labelWidth + gap + beanWidth / 2;
+            for (let i = 0; i < 5; i++) {
+                drawFrontRoastBean(ctx, beansStartX + i * beanSpacing, y, i < roast.value);
+            }
+            ctx.restore();
+        }
+
+        function loadFrontLogoImage() {
+            if (!frontLogoImagePromise) {
+                frontLogoImagePromise = new Promise((resolve, reject) => {
+                    const image = new Image();
+                    image.onload = () => resolve(image);
+                    image.onerror = reject;
+                    image.src = FRONT_LOGO_DATA_URL;
+                });
+            }
+            return frontLogoImagePromise;
+        }
+
+        async function drawFrontOwlLogo(ctx, centerX, top, width, height) {
+            const image = await loadFrontLogoImage();
+            ctx.save();
+            ctx.filter = 'grayscale(1) contrast(1.35)';
+            ctx.drawImage(image, centerX - width / 2, top, width, height);
+            ctx.restore();
+        }
+
+        function drawTasteBeans(ctx, bean, x, y) {
+            const items = tasteItems(bean);
+            ctx.save();
+            ctx.fillStyle = '#000';
+            ctx.textBaseline = 'middle';
+            ctx.font = '900 21px "Noto Sans JP", sans-serif';
+            items.forEach(([label, value], index) => {
+                const col = index % 2;
+                const row = Math.floor(index / 2);
+                const baseX = x + col * 236;
+                const baseY = y + row * 28;
+                ctx.fillText(label, baseX, baseY);
+                const filled = Math.max(0, Math.min(5, Math.round(value)));
+                for (let i = 0; i < 5; i++) {
+                    drawTinyBean(ctx, baseX + 58 + i * 22, baseY, i < filled);
+                }
+            });
+            ctx.restore();
+        }
+
+        function drawMemoCupIcon(ctx, x, y) {
+            ctx.save();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            ctx.rect(x + 3, y + 12, 30, 18);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x + 33, y + 15);
+            ctx.lineTo(x + 42, y + 15);
+            ctx.bezierCurveTo(x + 51, y + 15, x + 51, y + 27, x + 42, y + 27);
+            ctx.lineTo(x + 33, y + 27);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x, y + 34);
+            ctx.lineTo(x + 46, y + 34);
+            ctx.stroke();
+
+            ctx.lineWidth = 2;
+            [9, 19, 29].forEach(offset => {
+                ctx.beginPath();
+                ctx.moveTo(x + offset, y);
+                ctx.bezierCurveTo(x + offset - 4, y + 5, x + offset + 4, y + 7, x + offset, y + 11);
+                ctx.stroke();
+            });
+
+            ctx.restore();
+        }
+
+        window.onload = function() {
+            lucide.createIcons();
+            
+            // Sync Local Storage
+            const stored = localStorage.getItem('roastlog_beans');
+            if (stored) {
+                beans = JSON.parse(stored).map(normalizeBeanRecord);
+            } else {
+                beans = defaultBeans;
+                localStorage.setItem('roastlog_beans', JSON.stringify(beans));
+            }
+
+            renderBeansList();
+
+            // QR Code Auto Routing (Deep linking feature)
+            // If the URL has a hash parameter like #bean-1, auto-select and notify
+            handleUrlDeepLink();
+        };
+
+        // Deep link router to detect scan action
+        function handleUrlDeepLink() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#bean-')) {
+                const id = hash.replace('#bean-', '');
+                const found = beans.find(b => b.id === id);
+                if (found) {
+                    selectBean(id);
+                    showToast(`「${found.name}」のログをQRコードから読み込みました！`);
+                } else {
+                    if (beans.length > 0) selectBean(beans[0].id);
+                }
+            } else if (beans.length > 0) {
+                selectBean(beans[0].id);
+            } else {
+                updateUIState();
+            }
+        }
+
+        // Show toast notifications safely
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.textContent = message;
+            
+            toast.classList.remove('translate-y-[-150%]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-[-150%]', 'opacity-0');
+            }, 4000);
+        }
+
+        // Render Sidebar
+        function renderBeansList() {
+            const listContainer = document.getElementById('beans-list');
+            const countBadge = document.getElementById('bean-count');
+            countBadge.textContent = `${beans.length} CANISTERS`;
+
+            if (beans.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-12 text-coffee-400 bg-coffee-50/50 rounded-xl border border-dashed border-coffee-200">
+                        <i data-lucide="cup-soda" class="w-10 h-10 mx-auto mb-2 opacity-45"></i>
+                        <p class="text-xs">登録されているコーヒー豆はありません</p>
+                        <button onclick="openAddModal()" class="mt-2 text-xs text-coffee-700 font-bold underline">最初の豆を追加</button>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            let html = '';
+            beans.forEach(bean => {
+                const agingInfo = getAgingStatus(bean.roastDate);
+                const isSelected = bean.id === selectedBeanId;
+                
+                const roastColor = roastColorClass(bean.roast);
+
+                html += `
+                    <div onclick="selectBean('${bean.id}')" class="p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
+                        isSelected 
+                        ? 'border-coffee-700 bg-coffee-50/80 shadow-md ring-1 ring-coffee-700' 
+                        : 'border-coffee-100 hover:border-coffee-200 hover:bg-stone-50 bg-white'
+                    }">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-[9px] font-black tracking-widest text-coffee-400 uppercase">${beanOriginText(bean)}</span>
+                            <span class="text-[8px] text-white px-1.5 py-0.5 rounded font-black ${roastColor}">${bean.roast}</span>
+                        </div>
+                        <h4 class="font-bold text-coffee-900 text-xs truncate mb-1.5">${bean.name}</h4>
+                        
+                        <div class="flex items-center justify-between text-[10px] text-coffee-500 pt-2 border-t border-dashed border-coffee-100">
+                            <span class="flex items-center">
+                                <i data-lucide="calendar" class="w-3 h-3 mr-1 text-coffee-400"></i>
+                                ${roastDateText(bean)}
+                            </span>
+                            <span class="font-bold ${agingInfo.colorClass} px-2 py-0.5 rounded-full text-[8px] flex items-center">
+                                <span class="w-1 h-1 rounded-full bg-current mr-1"></span>
+                                ${agingInfo.text}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function getAgingStatus(roastDateStr) {
+            if (!hasRoastDate(roastDateStr)) {
+                return { text: '焙煎日未入力', colorClass: 'text-coffee-700 bg-coffee-100', days: null };
+            }
+            const roastDate = new Date(roastDateStr);
+            if (Number.isNaN(roastDate.getTime())) {
+                return { text: '焙煎日未入力', colorClass: 'text-coffee-700 bg-coffee-100', days: null };
+            }
+            const today = new Date("2026-06-01"); // Constant today context
+            const diffTime = today - roastDate;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                return { text: '未来の焙煎日', colorClass: 'text-gray-500 bg-gray-100', days: diffDays };
+            } else if (diffDays <= 3) {
+                return { text: 'エイジング中 (ガス抜き)', colorClass: 'text-amber-700 bg-amber-50', days: diffDays };
+            } else if (diffDays <= 14) {
+                return { text: '飲み頃ピーク！', colorClass: 'text-green-700 bg-green-50', days: diffDays };
+            } else if (diffDays <= 28) {
+                return { text: 'お早めに (風味減少)', colorClass: 'text-yellow-700 bg-yellow-50', days: diffDays };
+            } else {
+                return { text: 'エイジング超過', colorClass: 'text-red-700 bg-red-50', days: diffDays };
+            }
+        }
+
+        function selectBean(id) {
+            selectedBeanId = id;
+            updateUIState();
+            renderBeansList();
+            
+            // Sync active hash securely without bouncing page
+            if (history.pushState) {
+                history.pushState(null, null, `#bean-${id}`);
+            } else {
+                window.location.hash = `#bean-${id}`;
+            }
+        }
+
+        function filterBeans() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = beans.filter(b => 
+                b.name.toLowerCase().includes(query) || 
+                beanOriginText(b).toLowerCase().includes(query) ||
+                b.roast.toLowerCase().includes(query)
+            );
+            
+            const listContainer = document.getElementById('beans-list');
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<div class="text-center py-10 text-xs text-coffee-400">一致する銘柄が見つかりません。</div>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(bean => {
+                const agingInfo = getAgingStatus(bean.roastDate);
+                const isSelected = bean.id === selectedBeanId;
+                const roastColor = roastColorClass(bean.roast);
+
+                html += `
+                    <div onclick="selectBean('${bean.id}')" class="p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
+                        isSelected ? 'border-coffee-700 bg-coffee-50/80 shadow-md ring-1 ring-coffee-700' : 'border-coffee-100 hover:border-coffee-200 hover:bg-stone-50 bg-white'
+                    }">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-[9px] font-black tracking-widest text-coffee-400 uppercase">${beanOriginText(bean)}</span>
+                            <span class="text-[8px] text-white px-1.5 py-0.5 rounded font-black ${roastColor}">${bean.roast}</span>
+                        </div>
+                        <h4 class="font-bold text-coffee-900 text-xs truncate mb-1.5">${bean.name}</h4>
+                        <div class="flex items-center justify-between text-[10px] text-coffee-500 pt-2 border-t border-dashed border-coffee-100">
+                            <span class="flex items-center">
+                                <i data-lucide="calendar" class="w-3 h-3 mr-1 text-coffee-400"></i>
+                                ${roastDateText(bean)}
+                            </span>
+                            <span class="font-bold ${agingInfo.colorClass} px-2 py-0.5 rounded-full text-[8px] flex items-center">
+                                <span class="w-1 h-1 rounded-full bg-current mr-1"></span>
+                                ${agingInfo.text}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function updateUIState() {
+            const workspace = document.getElementById('detail-workspace');
+            const placeholder = document.getElementById('detail-placeholder');
+
+            if (!selectedBeanId) {
+                workspace.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                return;
+            }
+
+            workspace.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+
+            const bean = beans.find(b => b.id === selectedBeanId);
+            if (!bean) return;
+
+            document.getElementById('detail-name').textContent = bean.name;
+            document.getElementById('detail-origin').textContent = beanOriginText(bean);
+            document.getElementById('detail-roast-date').textContent = roastDateText(bean, '/');
+            document.getElementById('detail-grind').textContent = bean.grind;
+            document.getElementById('detail-notes').textContent = bean.notes || "メモ・抽出レシピはありません。";
+
+            const roastBadge = document.getElementById('detail-roast-badge');
+            roastBadge.textContent = bean.roast;
+            roastBadge.className = "text-[10px] font-black px-2 py-0.5 rounded text-white " + roastColorClass(bean.roast);
+
+            const agingInfo = getAgingStatus(bean.roastDate);
+            document.getElementById('detail-days-ago').textContent = agingInfo.days === null ? '(未焙煎)' : `(${agingInfo.days}日前焙煎)`;
+
+            const agingBadgeContainer = document.getElementById('detail-aging-status-badge');
+            agingBadgeContainer.innerHTML = `
+                <div class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold ${agingInfo.colorClass} border border-current/10">
+                    <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5 animate-pulse"></span>
+                    ${agingInfo.text}
+                </div>
+            `;
+
+            drawTasteChart(bean);
+            generateLabelPreview(bean);
+        }
+
+        function drawTasteChart(bean) {
+            const ctx = document.getElementById('tasteChart').getContext('2d');
+            if (tasteChartInstance) tasteChartInstance.destroy();
+
+            tasteChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['酸味', '苦味', '甘み', 'コク', '香り'],
+                    datasets: [{
+                        data: [bean.sour, bean.bitter, bean.sweet, bean.body, bean.aroma],
+                        backgroundColor: 'rgba(139, 90, 54, 0.15)',
+                        borderColor: '#8b5a36',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#4a2c1b',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#4a2c1b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        r: {
+                            angleLines: { display: true, color: 'rgba(74, 44, 27, 0.08)' },
+                            grid: { color: 'rgba(74, 44, 27, 0.08)' },
+                            pointLabels: { font: { size: 10, family: 'Noto Sans JP', weight: 'bold' }, color: '#4a2c1b' },
+                            suggestedMin: 0,
+                            suggestedMax: 5,
+                            ticks: { stepSize: 1, display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generateLabelPreview(bean) {
+            if (activeTheme === 'front') {
+                renderFrontPreview(bean);
+                return;
+            }
+            if (activeTheme === 'package') {
+                renderPackagePreview(bean);
+                return;
+            }
+
+            restoreStandardLabelPreview();
+            document.getElementById('lbl-origin').textContent = modernOriginText(bean);
+            document.getElementById('lbl-name').textContent = bean.name;
+            document.getElementById('lbl-roast').textContent = bean.roast;
+            document.getElementById('lbl-grind').textContent = bean.grind;
+            const process = document.getElementById('lbl-process');
+            process.textContent = processLabel(bean) === '-' ? '' : processLabel(bean);
+            document.getElementById('lbl-roast-date').textContent = roastDateText(bean);
+            document.getElementById('lbl-aging-indicator').textContent = agingIndicatorText(bean);
+            document.getElementById('lbl-best-before').textContent = `賞味目安: ${bestBeforeText(bean)}`;
+
+            changeLabelStyle();
+            generateLabelQR(bean);
+            updateQrPayloadNote(bean);
+        }
+
+        function restoreStandardLabelPreview() {
+            const frame = document.getElementById('label-design-frame');
+            if (!frame || document.getElementById('lbl-name')) return;
+            frame.innerHTML = `
+                <div class="text-center">
+                    <div id="modern-logo-mark" class="hidden">${frontOwlLogoHtml()}</div>
+                    <div id="lbl-origin" class="text-[11px] tracking-[0.2em] uppercase font-bold text-gray-800 border-b border-black pb-0.5 inline-block min-w-[50%]">ORIGIN</div>
+                </div>
+                <div class="text-center my-auto flex flex-col items-center justify-center">
+                    <h4 id="lbl-name" class="text-base font-black tracking-tight leading-tight max-w-full truncate px-1">COFFEE</h4>
+                    <div class="flex items-center justify-center space-x-1.5 mt-1">
+                        <span id="lbl-roast" class="text-[9px] bg-black text-white px-1 py-0.2 rounded font-bold">ROAST</span>
+                        <span id="lbl-grind" class="text-[9px] border border-black px-1 py-0.2 rounded font-bold">GRIND</span>
+                    </div>
+                    <span id="lbl-process" class="hidden"></span>
+                </div>
+                <div id="label-bottom-area" class="flex items-end justify-between pt-2 border-t border-gray-400">
+                    <div id="label-date-block" class="text-left leading-tight pb-4">
+                        <span class="text-[8px] uppercase text-gray-500 block">Roast Date</span>
+                        <span id="lbl-roast-date" class="text-xs font-bold font-mono">-</span>
+                        <div class="mt-1 flex items-center">
+                            <div class="w-1.5 h-1.5 rounded-full bg-black mr-1"></div>
+                            <span id="lbl-aging-indicator" class="text-[8px] font-bold">飲み頃</span>
+                        </div>
+                        <span id="lbl-best-before" class="mt-1 block text-[8px] font-bold">賞味目安: -</span>
+                    </div>
+                    <div class="flex h-[92px] w-[92px] items-center justify-center bg-white border border-black">
+                        <canvas id="label-qr-canvas" width="96" height="96" class="w-[88px] h-[88px] block"></canvas>
+                    </div>
+                </div>
+            `;
+            qrInstance = null;
+        }
+
+        function renderFrontPreview(bean) {
+            const size = document.getElementById('label-size-select').value;
+            const container = document.getElementById('printable-label-area');
+            const frame = document.getElementById('label-design-frame');
+            const compact = size === '62x29';
+            const tall = size === '62x90';
+            container.style.width = '300px';
+            container.style.height = compact ? '140px' : tall ? '435px' : '300px';
+            setPrintDimensions(container, size);
+            frame.className = 'w-full h-full bg-white text-black select-none font-sans flex items-center justify-center';
+            frame.style.borderWidth = '1px';
+            frame.style.borderStyle = 'solid';
+            frame.style.borderColor = '#000';
+            frame.style.borderRadius = '4px';
+            const roast = roastLevelInfo(bean.roast);
+
+            frame.innerHTML = compact ? `
+                <div class="grid h-full w-full grid-cols-[92px_1fr] items-center gap-2 px-7 py-3">
+                    <div class="mx-auto h-[88px] w-[72px] overflow-hidden">${frontOwlLogoHtml()}</div>
+                    <div class="min-w-0 text-center">
+                        <div class="mb-2">${frontOriginHtml(bean, true)}</div>
+                        ${frontSpeechBubbleHtml(bean, true, false)}
+                        <div class="mt-3">${frontRoastLevelHtml(roast, true)}</div>
+                    </div>
+                </div>` : tall ? `
+                <div class="flex h-full w-full flex-col items-center justify-center px-6 ${tall ? 'py-7' : 'py-5'} text-center">
+                    <div class="h-[150px] w-[120px] overflow-hidden">${frontOwlLogoHtml()}</div>
+                    <div class="mt-3">${frontOriginHtml(bean, false)}</div>
+                    <div class="mt-4 w-[250px]">
+                        ${frontSpeechBubbleHtml(bean, false, tall)}
+                    </div>
+                    <div class="mt-7">
+                        ${frontRoastLevelHtml(roast)}
+                    </div>
+                </div>` : `
+                <div class="relative h-full w-full text-center">
+                    <div class="absolute left-1/2 top-[28px] h-[94px] w-[75px] -translate-x-1/2 overflow-hidden">${frontOwlLogoHtml()}</div>
+                    <div class="absolute left-1/2 top-[134px] -translate-x-1/2">${frontOriginHtml(bean, false)}</div>
+                    <div class="absolute left-1/2 top-[164px] w-[230px] -translate-x-1/2">
+                        ${frontSpeechBubbleHtml(bean, false, false)}
+                    </div>
+                    <div class="absolute left-1/2 top-[260px] -translate-x-1/2">
+                        ${frontRoastLevelHtml(roast)}
+                    </div>
+                </div>`;
+            qrInstance = null;
+            const startSize = compact ? 14 : tall ? 22 : 17;
+            const minSize = compact ? 10 : tall ? 14 : 12;
+            fitFrontPreviewName(frame, startSize, minSize);
+            document.fonts?.ready.then(() => fitFrontPreviewName(frame, startSize, minSize));
+        }
+
+        function renderPackagePreview(bean) {
+            const container = document.getElementById('printable-label-area');
+            const frame = document.getElementById('label-design-frame');
+            container.style.width = '300px';
+            container.style.height = '385px';
+            setPrintDimensions(container, '62x90');
+            frame.className = 'w-full h-full p-4 border border-black bg-white text-black select-none font-sans flex flex-col';
+            frame.style.borderWidth = '1px';
+            frame.style.borderStyle = 'solid';
+            frame.style.borderColor = '#000';
+            frame.innerHTML = `
+                <div class="pb-3 text-center">
+                    ${packageMarkSvg('trio', 'light')}
+                </div>
+                <div class="grid grid-cols-[54px_1fr] gap-x-2 gap-y-1 text-[11px] leading-tight">
+                    <div class="font-black tracking-[0.2em]">品名</div><div class="font-bold">${escapeHtml(textOrDash(bean.name))}</div>
+                    <div class="font-black tracking-[0.2em]">原材料</div><div>${escapeHtml(ingredientText(bean))}</div>
+                    <div class="font-black tracking-[0.2em]">内容量</div><div>${escapeHtml(labelWeightText(bean))}</div>
+                    <div class="font-black tracking-[0.2em]">精製方法</div><div>${escapeHtml(processLabel(bean))}</div>
+                    <div class="font-black tracking-[0.2em]">焙煎日</div><div class="font-black text-2xl leading-none tracking-wider">${escapeHtml(roastDateText(bean))}</div>
+                    <div class="font-black tracking-[0.2em]">保存方法</div><div>高温多湿を避けて保存。</div>
+                    <div class="font-black tracking-[0.2em]">挽き方</div><div>${escapeHtml(textOrDash(bean.grind))} / ${escapeHtml(textOrDash(bean.roast))}</div>
+                </div>
+                <div class="my-3 border-t border-black"></div>
+                <div class="text-[10px] leading-relaxed font-bold">
+                    <p class="mb-2.5">賞味目安: ${escapeHtml(bestBeforeText(bean))}</p>
+                    <div class="mb-2 grid grid-cols-2 gap-x-2 gap-y-1">
+                        ${tasteBeansHtml(bean)}
+                    </div>
+                    <div class="flex items-start gap-1.5">
+                        ${memoCupIconSvg()}
+                        <p class="flex-1">${escapeHtml(truncateText(packageMemo(bean), 78))}</p>
+                    </div>
+                </div>
+            `;
+            qrInstance = null;
+        }
+
+        function changeLabelStyle() {
+            if (activeTheme === 'front') {
+                const bean = beans.find(b => b.id === selectedBeanId);
+                if (bean) renderFrontPreview(bean);
+                return;
+            }
+            if (activeTheme === 'package') {
+                const bean = beans.find(b => b.id === selectedBeanId);
+                if (bean) {
+                    renderPackagePreview(bean);
+                }
+                return;
+            }
+
+            const size = document.getElementById('label-size-select').value;
+            const container = document.getElementById('printable-label-area');
+            const frame = document.getElementById('label-design-frame');
+            setPrintDimensions(container, size);
+            
+            container.style.width = "";
+            container.style.height = "";
+            frame.className = "w-full h-full p-4 flex flex-col justify-between border-4 border-double border-black select-none";
+
+            if (size === '62x62') {
+                container.style.width = "300px";
+                container.style.height = "300px";
+                document.getElementById('lbl-name').className = "text-base font-black tracking-tight leading-tight max-w-full truncate px-1";
+            } else if (size === '62x29') {
+                container.style.width = "300px";
+                container.style.height = "140px";
+                document.getElementById('lbl-name').className = "text-sm font-black tracking-tight leading-tight max-w-full truncate px-1";
+                frame.className = "w-full h-full p-2 flex flex-col justify-between border-2 border-solid border-black select-none";
+            } else if (size === '62x90') {
+                container.style.width = "300px";
+                container.style.height = "385px";
+                document.getElementById('lbl-name').className = "text-sm font-black tracking-tight leading-tight max-w-full truncate px-1";
+                frame.className = "w-full h-full p-3 flex flex-col justify-between border-2 border-solid border-black select-none";
+            }
+
+            applyThemeClasses();
+        }
+
+        function setTheme(theme) {
+            activeTheme = theme;
+            ['front', 'modern', 'package'].forEach(t => {
+                const btn = document.getElementById(`btn-theme-${t}`);
+                if (t === theme) {
+                    btn.className = "px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-700 bg-coffee-700 text-white shadow-sm";
+                } else {
+                    btn.className = "px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50";
+                }
+            });
+            document.getElementById('qr-settings').className = theme === 'modern'
+                ? 'bg-coffee-50 border border-coffee-200 rounded-xl p-3 space-y-2'
+                : 'hidden bg-coffee-50 border border-coffee-200 rounded-xl p-3 space-y-2';
+            const bean = beans.find(b => b.id === selectedBeanId);
+            if (bean) generateLabelPreview(bean);
+        }
+
+        function applyThemeClasses() {
+            const frame = document.getElementById('label-design-frame');
+            const origin = document.getElementById('lbl-origin');
+            const roastBadge = document.getElementById('lbl-roast');
+            const grindBadge = document.getElementById('lbl-grind');
+            const title = document.getElementById('lbl-name');
+            const bottomArea = document.getElementById('label-bottom-area');
+            const dateBlock = document.getElementById('label-date-block');
+            const roastDate = document.getElementById('lbl-roast-date');
+            const agingIndicator = document.getElementById('lbl-aging-indicator');
+            const bestBefore = document.getElementById('lbl-best-before');
+            const process = document.getElementById('lbl-process');
+            const modernLogo = document.getElementById('modern-logo-mark');
+            const size = document.getElementById('label-size-select')?.value || '62x62';
+
+            frame.style.borderStyle = "";
+            frame.style.borderWidth = "";
+            frame.style.borderColor = "";
+            origin.className = "text-[10px] tracking-[0.2em] uppercase font-bold text-gray-800 border-b border-black pb-0.5 inline-block min-w-[50%]";
+            title.style.fontFamily = "";
+            if (modernLogo) modernLogo.className = "hidden";
+
+            if (activeTheme === 'modern') {
+                frame.style.borderWidth = "4px";
+                frame.style.borderStyle = "solid";
+                frame.style.borderColor = "#000";
+                frame.className = size === '62x29'
+                    ? "w-full h-full px-3 py-2 flex flex-col justify-between border-2 border-solid border-black select-none"
+                    : "w-full h-full px-4 py-5 flex flex-col justify-between border-4 border-solid border-black select-none";
+                if (modernLogo) {
+                    modernLogo.className = size === '62x29'
+                        ? "mx-auto mb-1.5 h-[23px] w-[20px] overflow-hidden"
+                        : "mx-auto mb-3 h-[40px] w-[32px] overflow-hidden";
+                }
+                origin.className = size === '62x29'
+                    ? "text-[10px] tracking-[0.12em] uppercase font-bold text-gray-800 border-b border-black pb-1 inline-block min-w-[55%]"
+                    : "text-[12px] tracking-[0.18em] uppercase font-bold text-gray-800 border-b border-black pb-3 inline-block min-w-[55%]";
+                title.className = "text-[20px] font-black tracking-tight leading-tight max-w-full truncate px-1";
+                if (bottomArea) bottomArea.className = "flex items-start justify-between pt-2 border-t border-gray-400";
+                if (dateBlock) dateBlock.className = "ml-3 pt-1 text-left leading-snug";
+                if (roastDate) roastDate.className = "text-[15px] font-bold font-mono";
+                if (agingIndicator) agingIndicator.className = "text-[10px] font-bold";
+                if (bestBefore) bestBefore.className = "mt-1 block text-[10px] font-bold";
+                roastBadge.className = "text-[10px] bg-black text-white px-2 py-0.5 rounded font-bold";
+                grindBadge.className = "text-[10px] border border-black px-2 py-0.5 rounded font-bold";
+                if (process) process.className = "mt-2 block min-h-[16px] text-[11px] font-bold";
+            }
+        }
+
+        // Generate QR Code that directly links to the GitHub host
+        function generateLabelQR(bean) {
+            const targetScanUrl = getQrPayload(bean);
+            
+            if (qrInstance) {
+                qrInstance.value = targetScanUrl;
+            } else {
+                qrInstance = new QRious({
+                    element: document.getElementById('label-qr-canvas'),
+                    value: targetScanUrl,
+                    size: 192,
+                    level: 'L',
+                    background: 'white',
+                    foreground: 'black',
+                    padding: 8
+                });
+            }
+        }
+
+        function createExportQrCanvas(value, size) {
+            const qrCanvas = document.createElement('canvas');
+            new QRious({
+                element: qrCanvas,
+                value,
+                size,
+                level: 'L',
+                background: 'white',
+                foreground: 'black',
+                padding: Math.max(8, Math.round(size * 0.025))
+            });
+            return qrCanvas;
+        }
+
+        function renderCountryChips(countries = selectedCountries) {
+            selectedCountries = normalizeCountryNames(countries);
+            const hiddenInput = document.getElementById('form-origin');
+            const grid = document.getElementById('country-chip-grid');
+            if (hiddenInput) hiddenInput.value = originTextFromCountries(selectedCountries);
+            if (!grid) return;
+
+            grid.innerHTML = COUNTRY_OPTIONS.map(option => {
+                const order = selectedCountries.indexOf(option.name);
+                const selected = order >= 0;
+                return `
+                    <button type="button" onclick="toggleCountryChip('${option.name}')" class="${
+                        selected
+                            ? 'bg-coffee-800 text-white border-coffee-800 shadow-sm'
+                            : 'bg-white text-coffee-700 border-coffee-200 hover:border-coffee-500 hover:bg-coffee-50'
+                    } inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-black transition-all">
+                        ${selected ? `<span class="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] text-coffee-800">${order + 1}</span>` : ''}
+                        <span>${option.name}</span>
+                    </button>`;
+            }).join('');
+        }
+
+        function toggleCountryChip(country) {
+            const selectedIndex = selectedCountries.indexOf(country);
+            if (selectedIndex >= 0) {
+                selectedCountries.splice(selectedIndex, 1);
+            } else {
+                if (selectedCountries.length >= 3) {
+                    showToast('生産国は最大3か国まで選択できます');
+                    return;
+                }
+                selectedCountries.push(country);
+            }
+            renderCountryChips(selectedCountries);
+        }
+
+        // Form & Modals
+        function openAddModal() {
+            document.getElementById('modal-title').innerHTML = `<i data-lucide="plus" class="w-4.5 h-4.5 mr-1.5 text-coffee-600"></i>新規の豆を登録`;
+            document.getElementById('bean-form').reset();
+            document.getElementById('form-id').value = '';
+            document.getElementById('form-roast-date').value = '';
+            document.getElementById('form-weight').value = '250g';
+            document.getElementById('form-process').value = '';
+            renderCountryChips([]);
+            
+            ['sour', 'bitter', 'sweet', 'body', 'aroma'].forEach(p => {
+                document.getElementById(`val-${p}`).textContent = '3';
+            });
+
+            document.getElementById('bean-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function populateBeanForm(bean, id = bean.id) {
+            document.getElementById('form-id').value = id || '';
+            document.getElementById('form-name').value = bean.name || '';
+            renderCountryChips(beanCountryNames(bean));
+            document.getElementById('form-roast').value = bean.roast === '中深煎り' ? 'やや深煎り' : (bean.roast || 'やや深煎り');
+            document.getElementById('form-process').value = processCode(bean);
+            document.getElementById('form-roast-date').value = bean.roastDate || '';
+            document.getElementById('form-grind').value = bean.grind || '豆のまま';
+            document.getElementById('form-weight').value = labelWeightText(bean);
+            
+            ['sour', 'bitter', 'sweet', 'body', 'aroma'].forEach(p => {
+                const value = Number.isFinite(Number(bean[p])) ? bean[p] : 3;
+                document.getElementById(`form-${p}`).value = value;
+                document.getElementById(`val-${p}`).textContent = value;
+            });
+
+            document.getElementById('form-notes').value = bean.notes || '';
+        }
+
+        function createRoastFromCurrentTemplate() {
+            const bean = beans.find(b => b.id === selectedBeanId);
+            if (!bean) return;
+
+            document.getElementById('modal-title').innerHTML = `<i data-lucide="copy-plus" class="w-4.5 h-4.5 mr-1.5 text-coffee-600"></i>テンプレートから焙煎ラベルを作成`;
+            const today = new Date().toISOString().split('T')[0];
+            populateBeanForm({ ...bean, roastDate: today }, '');
+            document.getElementById('bean-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function editCurrentBean() {
+            const bean = beans.find(b => b.id === selectedBeanId);
+            if (!bean) return;
+
+            document.getElementById('modal-title').innerHTML = `<i data-lucide="edit-2" class="w-4.5 h-4.5 mr-1.5 text-coffee-600"></i>豆情報を編集`;
+            populateBeanForm(bean);
+            document.getElementById('bean-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            document.getElementById('bean-modal').classList.add('hidden');
+        }
+
+        function saveBean(event) {
+            event.preventDefault();
+            const id = document.getElementById('form-id').value;
+            const countries = normalizeCountryNames(selectedCountries);
+            if (countries.length === 0) {
+                showToast('生産国を1つ以上選択してください');
+                return;
+            }
+            const beanData = {
+                id: id || Date.now().toString(),
+                name: document.getElementById('form-name').value,
+                origin: originTextFromCountries(countries),
+                countries,
+                roast: document.getElementById('form-roast').value,
+                process: document.getElementById('form-process').value,
+                roastDate: document.getElementById('form-roast-date').value,
+                grind: document.getElementById('form-grind').value,
+                weight: document.getElementById('form-weight').value,
+                sour: parseFloat(document.getElementById('form-sour').value),
+                bitter: parseFloat(document.getElementById('form-bitter').value),
+                sweet: parseFloat(document.getElementById('form-sweet').value),
+                body: parseFloat(document.getElementById('form-body').value),
+                aroma: parseFloat(document.getElementById('form-aroma').value),
+                notes: document.getElementById('form-notes').value
+            };
+
+            if (id) {
+                const idx = beans.findIndex(b => b.id === id);
+                if (idx !== -1) beans[idx] = beanData;
+            } else {
+                beans.unshift(beanData);
+            }
+
+            localStorage.setItem('roastlog_beans', JSON.stringify(beans));
+            closeModal();
+            selectBean(beanData.id);
+        }
+
+        function deleteCurrentBean() {
+            const targetBean = beans.find(b => b.id === selectedBeanId);
+            if (!targetBean) return;
+
+            const confirmDelete = window.confirm(`本当に「${targetBean.name}」を削除しますか？`);
+            if (confirmDelete) {
+                beans = beans.filter(b => b.id !== selectedBeanId);
+                localStorage.setItem('roastlog_beans', JSON.stringify(beans));
+                selectedBeanId = beans.length > 0 ? beans[0].id : null;
+                updateUIState();
+                renderBeansList();
+            }
+        }
+
+        // Import & Export functions
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(beans, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `roastlog_backup_${new Date().toISOString().split('T')[0]}.json`);
+            dlAnchor.click();
+        }
+
+        function normalizeBeanRecord(bean, index = 0) {
+            const source = bean && typeof bean === 'object' ? bean : {};
+            const countries = beanCountryNames(source);
+            return {
+                id: String(source.id || Date.now() + index),
+                name: String(source.name || '名称未設定'),
+                origin: originTextFromCountries(countries) || String(source.origin || ''),
+                countries,
+                roast: String(source.roast || 'やや深煎り'),
+                process: processCode(source),
+                roastDate: String(source.roastDate || '').trim(),
+                grind: String(source.grind || '豆のまま'),
+                weight: String(source.weight || labelWeightText(source)),
+                sour: Number.isFinite(Number(source.sour)) ? Number(source.sour) : 3,
+                bitter: Number.isFinite(Number(source.bitter)) ? Number(source.bitter) : 3,
+                sweet: Number.isFinite(Number(source.sweet)) ? Number(source.sweet) : 3,
+                body: Number.isFinite(Number(source.body)) ? Number(source.body) : 3,
+                aroma: Number.isFinite(Number(source.aroma)) ? Number(source.aroma) : 3,
+                notes: String(source.notes || '')
+            };
+        }
+
+        function importData() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json';
+            fileInput.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.readAsText(file, 'UTF-8');
+                reader.onload = readerEvent => {
+                    try {
+                        const content = JSON.parse(readerEvent.target.result);
+                        if (Array.isArray(content)) {
+                            beans = content.map(normalizeBeanRecord);
+                            localStorage.setItem('roastlog_beans', JSON.stringify(beans));
+                            if (beans.length > 0) selectBean(beans[0].id);
+                            renderBeansList();
+                            showToast("データの復元に成功しました！");
+                        } else {
+                            alert("不正なファイルフォーマットです。");
+                        }
+                    } catch (err) {
+                        alert("読み込み中にエラーが発生しました。");
+                    }
+                }
+            }
+            fileInput.click();
+        }
+
+        function addGeneratedBeanTemplates() {
+            if (!Array.isArray(window.BEAN_TEMPLATE_IMPORT) || window.BEAN_TEMPLATE_IMPORT.length === 0) {
+                alert('生豆テンプレートファイル beans_import.js が読み込めませんでした。');
+                return;
+            }
+
+            const currentById = new Map(beans.map(bean => [bean.id, bean]));
+            const templates = window.BEAN_TEMPLATE_IMPORT.map(normalizeBeanRecord);
+            let addedCount = 0;
+            let skippedCount = 0;
+
+            templates.forEach(template => {
+                if (currentById.has(template.id)) {
+                    skippedCount += 1;
+                    return;
+                }
+                beans.push(template);
+                currentById.set(template.id, template);
+                addedCount += 1;
+            });
+
+            localStorage.setItem('roastlog_beans', JSON.stringify(beans));
+            if (!selectedBeanId && beans.length > 0) {
+                selectedBeanId = beans[0].id;
+            }
+            renderBeansList();
+            updateUIState();
+            showToast(`生豆テンプレートを${addedCount}件追加しました（既存${skippedCount}件）`);
+        }
+
+        function binarizeCanvas(canvas, threshold = 190) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            for (let i = 0; i < pixels.length; i += 4) {
+                const luminance = pixels[i] * 0.2126 + pixels[i + 1] * 0.7152 + pixels[i + 2] * 0.0722;
+                const value = luminance < threshold ? 0 : 255;
+                pixels[i] = value;
+                pixels[i + 1] = value;
+                pixels[i + 2] = value;
+                pixels[i + 3] = 255;
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function labelFilePrefix() {
+            return {
+                front: 'Fro',
+                modern: 'Mod',
+                package: 'Pac'
+            }[activeTheme] || 'Lbl';
+        }
+
+        function finishCanvasDownload(canvas, bean, originalBtn, originalHTML) {
+            binarizeCanvas(canvas);
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    showToast('PNGの作成に失敗しました');
+                    originalBtn.innerHTML = originalHTML;
+                    lucide.createIcons();
+                    return;
+                }
+
+                const link = document.createElement('a');
+                const safeName = bean.name.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_');
+                const objectUrl = URL.createObjectURL(blob);
+                link.download = `${labelFilePrefix()}_${safeName}.png`;
+                link.href = objectUrl;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(objectUrl);
+
+                setTimeout(() => {
+                    originalBtn.innerHTML = originalHTML;
+                    lucide.createIcons();
+                }, 800);
+            }, 'image/png');
+        }
+
+        function fitCenteredCanvasText(ctx, text, centerX, y, maxWidth, startSize, minSize) {
+            let size = startSize;
+            do {
+                ctx.font = `900 ${size}px "Noto Sans JP", sans-serif`;
+                if (ctx.measureText(text).width <= maxWidth) break;
+                size -= 2;
+            } while (size > minSize);
+            ctx.fillText(text, centerX, y);
+        }
+
+        function strokeRoundedRect(ctx, x, y, width, height, radius) {
+            const r = Math.min(radius, width / 2, height / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + width - r, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+            ctx.lineTo(x + width, y + height - r);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+            ctx.lineTo(x + r, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        function canvasTextLines(ctx, text, maxWidth, maxLines) {
+            const chars = Array.from(String(text || ''));
+            const lines = [];
+            let line = '';
+            for (const char of chars) {
+                const next = line + char;
+                if (line && ctx.measureText(next).width > maxWidth) {
+                    lines.push(line);
+                    line = char;
+                    if (lines.length === maxLines - 1) break;
+                } else {
+                    line = next;
+                }
+            }
+            const consumed = lines.join('').length;
+            const remaining = chars.slice(consumed).join('');
+            if (remaining) {
+                let finalLine = remaining;
+                while (ctx.measureText(finalLine).width > maxWidth && finalLine.length > 1) {
+                    finalLine = finalLine.slice(0, -1);
+                }
+                lines.push(finalLine);
+            } else if (line) {
+                lines.push(line);
+            }
+            return lines.slice(0, maxLines);
+        }
+
+        function fitCanvasBubbleText(ctx, text, maxWidth, startSize, minSize) {
+            let size = startSize;
+            let lines = [];
+            do {
+                ctx.font = `700 ${size}px "Noto Sans JP", sans-serif`;
+                lines = canvasTextLines(ctx, text, maxWidth, 2);
+                if (lines.join('').length >= String(text || '').length) break;
+                size -= 2;
+            } while (size > minSize);
+            return { lines, size };
+        }
+
+        function drawFrontSpeechBubble(ctx, text, x, y, width, height, fontSize) {
+            ctx.save();
+            ctx.strokeStyle = '#000';
+            ctx.fillStyle = '#fff';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            const radius = 18;
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + width * 0.72 + 18, y + height);
+            ctx.lineTo(x + width * 0.72, y + height + 18);
+            ctx.lineTo(x + width * 0.72 - 4, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const fitted = fitCanvasBubbleText(ctx, text, width - 34, fontSize, 18);
+            ctx.font = `700 ${fitted.size}px "Noto Sans JP", sans-serif`;
+            const lines = fitted.lines;
+            const lineHeight = fitted.size * 1.25;
+            const startY = y + height / 2 - ((lines.length - 1) * lineHeight) / 2;
+            lines.forEach((line, index) => ctx.fillText(line, x + width / 2, startY + index * lineHeight));
+            ctx.restore();
+        }
+
+        async function drawFrontCanvasLabel(ctx, width, height, bean) {
+            const compact = height <= 320;
+            const tall = height >= 700;
+            const roast = roastLevelInfo(bean.roast);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, width, height);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            strokeRoundedRect(ctx, 12, 12, width - 24, height - 24, 12);
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (compact) {
+                await drawFrontOwlLogo(ctx, 135, (height - 150) / 2, 120, 150);
+                const centerX = 382;
+                ctx.font = '900 19px "Noto Sans JP", sans-serif';
+                ctx.fillText(modernOriginText(bean), centerX, 48);
+                drawFrontSpeechBubble(ctx, textOrDash(bean.name), 225, 72, 315, 90, 21);
+                drawFrontRoastLevel(ctx, roast, centerX, 211, true);
+                return;
+            }
+
+            await drawFrontOwlLogo(ctx, width / 2, tall ? 70 : 62, tall ? 190 : 150, tall ? 238 : 188);
+            ctx.font = `900 ${tall ? 25 : 22}px "Noto Sans JP", sans-serif`;
+            ctx.fillText(modernOriginText(bean), width / 2, tall ? 350 : 270);
+            const bubbleY = tall ? 420 : 330;
+            const bubbleHeight = tall ? 130 : 132;
+            drawFrontSpeechBubble(ctx, textOrDash(bean.name), 70, bubbleY, 460, bubbleHeight, tall ? 31 : 27);
+            const beansY = bubbleY + bubbleHeight + (tall ? 105 : 85);
+            drawFrontRoastLevel(ctx, roast, width / 2, beansY);
+        }
+
+        function drawPackageCanvasLabel(ctx, width, height, bean) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(18, 18, width - 36, height - 36);
+
+            const left = 58;
+            const labelX = left;
+            const valueX = left + 112;
+            drawPackageBeanMark(ctx, 'trio', width / 2, 38, 'light');
+
+            let y = 140;
+            const row = 42;
+
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.font = '900 24px "Noto Sans JP", sans-serif';
+            const rows = [
+                ['品名', textOrDash(bean.name)],
+                ['原材料', ingredientText(bean)],
+                ['内容量', labelWeightText(bean)],
+                ['精製方法', processLabel(bean)],
+                ['焙煎日', roastDateText(bean)],
+                ['保存方法', '高温多湿を避けて保存。'],
+                ['挽き方', `${textOrDash(bean.grind)} / ${textOrDash(bean.roast)}`]
+            ];
+
+            rows.forEach(([label, value]) => {
+                ctx.font = '900 23px "Noto Sans JP", sans-serif';
+                ctx.fillText(label, labelX, y);
+                ctx.font = label === '焙煎日' ? '900 52px "Courier New", monospace' : '700 25px "Noto Sans JP", sans-serif';
+                ctx.fillText(value, valueX, y - (label === '焙煎日' ? 14 : 2));
+                y += label === '焙煎日' ? 58 : row;
+            });
+
+            y += 10;
+            ctx.beginPath();
+            ctx.moveTo(46, y);
+            ctx.lineTo(width - 46, y);
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            y += 24;
+            ctx.font = '900 22px "Noto Sans JP", sans-serif';
+            ctx.fillText(`賞味目安: ${bestBeforeText(bean)}`, 58, y);
+
+            y += 48;
+            drawTasteBeans(ctx, bean, 58, y);
+
+            y += 86;
+            ctx.font = '700 21px "Noto Sans JP", sans-serif';
+            drawMemoCupIcon(ctx, 58, y - 2);
+            drawWrappedCanvasText(ctx, packageMemo(bean), 114, y, width - 172, 30, 3);
+        }
+
+        // Render Canvas for high quality printing (Custom graphics pipeline)
+        function warnIfRoastDateMissing(bean) {
+            if (!hasRoastDate(bean)) {
+                showToast('焙煎日が未入力です。テンプレートとしてそのまま出力します。');
+                return true;
+            }
+            return false;
+        }
+
+        function printCurrentLabel() {
+            const bean = beans.find(b => b.id === selectedBeanId);
+            if (bean && !hasRoastDate(bean)) {
+                window.alert('焙煎日が未入力です。テンプレートとしてそのまま印刷できます。');
+            }
+            window.print();
+        }
+
+        async function downloadLabelImage() {
+            const bean = beans.find(b => b.id === selectedBeanId);
+            if (!bean) return;
+            warnIfRoastDateMissing(bean);
+
+            const originalBtn = window.event?.currentTarget || document.querySelector('button[onclick="downloadLabelImage()"]');
+            const originalHTML = originalBtn.innerHTML;
+            originalBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 mr-1.5 animate-spin"></i>作成中...`;
+            lucide.createIcons();
+
+            const size = document.getElementById('label-size-select').value;
+            const canvas = document.createElement('canvas');
+
+            let width = 600;
+            let height = 600;
+            let labelHeightMm = 62;
+
+            if (size === '62x29') {
+                width = 600;
+                height = 281;
+                labelHeightMm = 29;
+            } else if (size === '62x90') {
+                width = 600;
+                height = 871;
+                labelHeightMm = 90;
+            }
+
+            if (activeTheme === 'package') {
+                width = 600;
+                height = 740;
+                labelHeightMm = 90;
+            }
+
+            canvas.width = Math.round(62 / 25.4 * P_TOUCH_DPI);
+            canvas.height = Math.round(labelHeightMm / 25.4 * P_TOUCH_DPI);
+            const ctx = canvas.getContext('2d');
+            ctx.scale(canvas.width / width, canvas.height / height);
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+
+            if (activeTheme === 'front') {
+                try {
+                    await drawFrontCanvasLabel(ctx, width, height, bean);
+                    finishCanvasDownload(canvas, bean, originalBtn, originalHTML);
+                } catch (error) {
+                    console.error(error);
+                    showToast('表ラベルPNGの作成に失敗しました');
+                    originalBtn.innerHTML = originalHTML;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            if (activeTheme === 'package') {
+                drawPackageCanvasLabel(ctx, width, height, bean);
+                finishCanvasDownload(canvas, bean, originalBtn, originalHTML);
+                return;
+            }
+
+            ctx.strokeStyle = '#000000';
+            if (activeTheme === 'modern') {
+                ctx.lineWidth = 8;
+                ctx.strokeRect(10, 10, width - 20, height - 20);
+            } else {
+                ctx.lineWidth = 2;
+                ctx.strokeRect(10, 10, width - 20, height - 20);
+            }
+
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+            const modernLayout = activeTheme === 'modern';
+            const compactLayout = size === '62x29';
+
+            if (modernLayout) {
+                const logoWidth = compactLayout ? 32 : 46;
+                const logoHeight = compactLayout ? 40 : 58;
+                const logoTop = compactLayout ? 18 : Math.max(40, height * 0.073);
+                await drawFrontOwlLogo(ctx, width / 2, logoTop, logoWidth, logoHeight);
+            }
+
+            ctx.font = `bold ${modernLayout ? 21 : 24}px "Noto Sans JP", sans-serif`;
+            const originY = modernLayout
+                ? height * (compactLayout ? 0.25 : 0.225)
+                : height * 0.16;
+            ctx.fillText(modernOriginText(bean), width / 2, originY);
+
+            ctx.beginPath();
+            const originRuleY = modernLayout
+                ? height * (compactLayout ? 0.30 : 0.275)
+                : height * 0.20;
+            ctx.moveTo(width * 0.25, originRuleY);
+            ctx.lineTo(width * 0.75, originRuleY);
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            if (modernLayout) {
+                fitCenteredCanvasText(ctx, bean.name, width / 2, height * 0.395, width - 100, 38, 24);
+            } else {
+                ctx.font = '900 34px "Noto Sans JP", sans-serif';
+                ctx.fillText(bean.name, width / 2, height * 0.43);
+            }
+
+            ctx.font = `bold ${modernLayout ? 21 : 20}px "Noto Sans JP", sans-serif`;
+            ctx.fillText(`[${bean.roast}]  [${bean.grind}]`, width / 2, height * (modernLayout ? 0.485 : 0.56));
+            const process = processLabel(bean);
+            if (modernLayout && process !== '-') {
+                ctx.font = 'bold 18px "Noto Sans JP", sans-serif';
+                ctx.fillText(process, width / 2, height * 0.535);
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(30, height * (modernLayout ? 0.615 : 0.70));
+            ctx.lineTo(width - 30, height * (modernLayout ? 0.615 : 0.70));
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.textAlign = 'left';
+            ctx.font = `bold ${modernLayout ? 19 : 16}px "Noto Sans JP", sans-serif`;
+            ctx.fillStyle = '#555555';
+            const dateBlockX = modernLayout ? 70 : 40;
+            ctx.fillText('Roast Date', dateBlockX, height * (modernLayout ? 0.68 : 0.77));
+            
+            ctx.fillStyle = '#000000';
+            ctx.font = `bold ${modernLayout ? 30 : 26}px "Courier New", monospace`;
+            ctx.fillText(roastDateText(bean), dateBlockX, height * (modernLayout ? 0.76 : 0.85));
+
+            ctx.font = `bold ${modernLayout ? 18 : 15}px "Noto Sans JP", sans-serif`;
+            ctx.fillText(agingIndicatorText(bean), dateBlockX, height * (modernLayout ? 0.85 : 0.91));
+            ctx.fillText(`賞味目安: ${bestBeforeText(bean)}`, dateBlockX, height * (modernLayout ? 0.90 : 0.95));
+
+            const targetScanUrl = getQrPayload(bean);
+            const exportQrSize = size === '62x29' ? 256 : 320;
+            const qrCanvas = createExportQrCanvas(targetScanUrl, exportQrSize);
+            const qrSize = size === '62x29'
+                ? Math.min(112, height - 70)
+                : modernLayout
+                    ? Math.min(164, height - 120)
+                    : Math.min(190, height - 96);
+            const qrFramePadding = modernLayout ? 6 : 12;
+            const qrFrameSize = qrSize + qrFramePadding * 2;
+            const qrFrameX = width - qrFrameSize - (modernLayout ? 36 : 32);
+            const qrFrameY = height - qrFrameSize - (modernLayout ? 36 : 32);
+            const qrX = qrFrameX + (qrFrameSize - qrSize) / 2;
+            const qrY = qrFrameY + (qrFrameSize - qrSize) / 2;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(qrFrameX, qrFrameY, qrFrameSize, qrFrameSize);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(qrFrameX, qrFrameY, qrFrameSize, qrFrameSize);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    showToast('PNGの作成に失敗しました', 'error');
+                    originalBtn.innerHTML = originalHTML;
+                    lucide.createIcons();
+                    return;
+                }
+
+                const link = document.createElement('a');
+                const safeName = bean.name.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_');
+                const objectUrl = URL.createObjectURL(blob);
+                link.download = `${labelFilePrefix()}_${safeName}.png`;
+                link.href = objectUrl;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(objectUrl);
+
+                setTimeout(() => {
+                    originalBtn.innerHTML = originalHTML;
+                    lucide.createIcons();
+                }, 800);
+            }, 'image/png');
+        }
+    </script>
+</body>
+</html>
