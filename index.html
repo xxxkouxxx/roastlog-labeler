@@ -342,7 +342,7 @@
                         </div>
 
                         <!-- Actions -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3.5">
                             <button onclick="downloadLabelImage()" class="flex items-center justify-center bg-coffee-100 hover:bg-coffee-200 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
                                 <i data-lucide="download" class="w-4 h-4 mr-1.5"></i>
                                 PNGをダウンロード (300dpi・白黒)
@@ -352,6 +352,11 @@
                                 labels.jsonに追加/更新
                             </button>
                             
+                            <button onclick="copyCurrentLabelUrl()" class="flex items-center justify-center bg-white hover:bg-coffee-50 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
+                                <i data-lucide="link" class="w-4 h-4 mr-1.5"></i>
+                                公開URLをコピー
+                            </button>
+
                             <button onclick="printCurrentLabel()" class="flex items-center justify-center bg-coffee-800 hover:bg-coffee-900 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md">
                                 <i data-lucide="printer" class="w-4 h-4 mr-1.5"></i>
                                 PC/ブラウザからダイレクト印刷
@@ -2132,6 +2137,39 @@
             dlAnchor.setAttribute("href", dataStr);
             dlAnchor.setAttribute("download", filename);
             dlAnchor.click();
+        }
+
+        async function copyTextToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+                return;
+            }
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+        }
+
+        async function copyCurrentLabelUrl() {
+            const bean = beans.find(b => b.id === selectedBeanId);
+            if (!bean) {
+                showToast('コピーするラベルを選択してください');
+                return;
+            }
+
+            const url = getQrPayload(bean);
+            try {
+                await copyTextToClipboard(url);
+                showToast(`公開URLをコピーしました: ${url}`);
+            } catch (error) {
+                showToast('公開URLのコピーに失敗しました', 'error');
+            }
         }
 
         function exportCurrentLabelData() {
