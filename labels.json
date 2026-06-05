@@ -1,6 +1,36 @@
 [
   {
-    "labelId": "label-1-20260528",
+    "labelId": "1780642536293-20260605",
+    "beanId": "1780642536293",
+    "sourceBeanName": "アルトマヨの森 アルトサンファン コーヒー",
+    "beanName": "アルトマヨの森 アルトサンファン コーヒー",
+    "countries": [
+      "PERU"
+    ],
+    "originText": "PERU",
+    "roast": "やや深煎り",
+    "roastLevelValue": 4,
+    "process": "W",
+    "processLabel": "ウォッシュト",
+    "grind": "豆のまま",
+    "weight": "100g",
+    "roastDate": "2026-06-05",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.09.04",
+    "tasteProfile": {
+      "sour": 4,
+      "bitter": 2,
+      "sweet": 4,
+      "body": 3,
+      "aroma": 4
+    },
+    "notes": "オレンジを思わせる、生き生きとしたやさしいシトラス系の酸味がクリアに広がります。",
+    "status": "published",
+    "createdAt": "2026-06-05T15:56:50+09:00",
+    "updatedAt": "2026-06-05T16:08:30+09:00"
+  },
+  {
+    "labelId": "1-20260528",
     "beanId": "1",
     "sourceBeanName": "エチオピア イルガチェフェ G1",
     "beanName": "エチオピア イルガチェフェ G1",

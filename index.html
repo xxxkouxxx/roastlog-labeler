@@ -834,7 +834,11 @@
 
         function labelIdForBean(bean) {
             const roastDatePart = hasRoastDate(bean) ? bean.roastDate.replace(/-/g, '') : 'unroasted';
-            return `label-${slugForId(bean?.id || bean?.name)}-${roastDatePart}`;
+            return `${slugForId(bean?.id || bean?.name)}-${roastDatePart}`;
+        }
+
+        function canonicalLabelId(value) {
+            return String(value || '').replace(/^label-/, '');
         }
 
         function createLabelSnapshot(bean, options = {}) {
@@ -845,7 +849,7 @@
             const timestamp = options.timestamp || localIsoTimestamp();
 
             return {
-                labelId: options.labelId || labelIdForBean(normalizedBean),
+                labelId: canonicalLabelId(options.labelId || labelIdForBean(normalizedBean)),
                 beanId: normalizedBean.id,
                 sourceBeanName: normalizedBean.name,
                 beanName: normalizedBean.name,
@@ -2170,7 +2174,7 @@
             const profile = source.tasteProfile && typeof source.tasteProfile === 'object' ? source.tasteProfile : {};
             const countries = normalizeCountryNames(source.countries || inferCountriesFromOrigin(source.originText || source.beanName));
             return {
-                labelId: String(source.labelId || `label-${Date.now() + index}`),
+                labelId: canonicalLabelId(source.labelId || `${Date.now() + index}`),
                 beanId: String(source.beanId || ''),
                 sourceBeanName: String(source.sourceBeanName || source.beanName || '名称未設定'),
                 beanName: String(source.beanName || source.sourceBeanName || '名称未設定'),
