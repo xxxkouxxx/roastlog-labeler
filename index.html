@@ -81,6 +81,30 @@
                 display: none !important;
             }
         }
+
+        body.qr-view {
+            padding-bottom: 0;
+        }
+
+        body.qr-view #inventory-panel,
+        body.qr-view #label-builder,
+        body.qr-view #mobile-nav,
+        body.qr-view .editor-actions,
+        body.qr-view #header-add-button {
+            display: none !important;
+        }
+
+        body.qr-view main {
+            max-width: 900px;
+        }
+
+        body.qr-view #detail-panel {
+            grid-column: 1 / -1;
+        }
+
+        body.qr-view #detail-card {
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body class="text-coffee-900 min-h-screen flex flex-col pb-16 md:pb-0">
@@ -102,7 +126,7 @@
             
             <div class="flex items-center space-x-2">
                 <!-- Add Button (Icon on mobile, Text on Desktop) -->
-                <button onclick="openAddModal()" class="bg-coffee-700 hover:bg-coffee-800 text-white p-2 md:px-4 md:py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center shadow-sm">
+                <button id="header-add-button" onclick="openAddModal()" class="bg-coffee-700 hover:bg-coffee-800 text-white p-2 md:px-4 md:py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center shadow-sm">
                     <i data-lucide="plus" class="w-4 h-4 md:mr-1.5"></i>
                     <span class="hidden md:inline">新規の豆を登録</span>
                 </button>
@@ -121,7 +145,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             <!-- Left Side: Coffee Inventory -->
-            <div class="lg:col-span-5 flex flex-col space-y-6">
+            <div id="inventory-panel" class="lg:col-span-5 flex flex-col space-y-6">
                 <div class="bg-white p-5 rounded-2xl border border-coffee-200 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="font-bold text-coffee-800 flex items-center text-base">
@@ -163,13 +187,13 @@
             </div>
 
             <!-- Right Side: Details & Label Engine -->
-            <div class="lg:col-span-7 flex flex-col space-y-6">
+            <div id="detail-panel" class="lg:col-span-7 flex flex-col space-y-6">
                 
                 <!-- Main Workspace (Hidden if no bean is selected) -->
                 <div id="detail-workspace" class="hidden flex flex-col space-y-6">
                     
                     <!-- Details & Taste Profile -->
-                    <div class="bg-white p-5 md:p-6 rounded-2xl border border-coffee-200 shadow-sm">
+                    <div id="detail-card" class="bg-white p-5 md:p-6 rounded-2xl border border-coffee-200 shadow-sm">
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
@@ -178,7 +202,7 @@
                                 </div>
                                 <h2 id="detail-name" class="text-xl md:text-2xl font-black text-coffee-800 font-serif-title">アンティグア SHB</h2>
                             </div>
-                            <div class="flex space-x-1">
+                            <div class="editor-actions flex space-x-1">
                                 <button onclick="createRoastFromCurrentTemplate()" class="p-2 text-coffee-500 hover:text-coffee-800 hover:bg-coffee-100 rounded-xl transition-all" title="この豆から焙煎ラベルを作成">
                                     <i data-lucide="copy-plus" class="w-4.5 h-4.5"></i>
                                 </button>
@@ -234,7 +258,7 @@
                     </div>
 
                     <!-- Label Builder Area -->
-                    <div class="bg-white p-5 md:p-6 rounded-2xl border border-coffee-200 shadow-sm flex flex-col space-y-5">
+                    <div id="label-builder" class="bg-white p-5 md:p-6 rounded-2xl border border-coffee-200 shadow-sm flex flex-col space-y-5">
                         <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-coffee-100 pb-3 gap-2">
                             <h3 class="font-bold text-coffee-800 text-base flex items-center">
                                 <i data-lucide="printer" class="w-5 h-5 mr-2 text-coffee-600"></i>
@@ -347,7 +371,7 @@
     </main>
 
     <!-- App Bottom Nav for Mobile view convenience (No Print) -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-coffee-200 px-6 py-2 flex justify-around items-center md:hidden z-40 no-print">
+    <div id="mobile-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-coffee-200 px-6 py-2 flex justify-around items-center md:hidden z-40 no-print">
         <button onclick="openAddModal()" class="flex flex-col items-center text-coffee-500 hover:text-coffee-800">
             <i data-lucide="plus-circle" class="w-5 h-5"></i>
             <span class="text-[9px] font-bold mt-0.5">新規追加</span>
@@ -546,6 +570,7 @@
 
         let beans = [];
         let selectedBeanId = null;
+        let isQrViewMode = false;
         let activeTheme = 'front';
         let tasteChartInstance = null;
         let qrInstance = null;
@@ -1210,6 +1235,8 @@
 
         window.onload = function() {
             lucide.createIcons();
+            isQrViewMode = isBeanDeepLink();
+            document.body.classList.toggle('qr-view', isQrViewMode);
             
             // Sync Local Storage
             const stored = localStorage.getItem('roastlog_beans');
@@ -1227,11 +1254,30 @@
             handleUrlDeepLink();
         };
 
+        function isBeanDeepLink() {
+            return window.location.hash.startsWith('#bean-');
+        }
+
+        function generatedBeanTemplates() {
+            return Array.isArray(window.BEAN_TEMPLATE_IMPORT)
+                ? window.BEAN_TEMPLATE_IMPORT.map(normalizeBeanRecord)
+                : [];
+        }
+
+        function mergeGeneratedTemplatesForDeepLink(targetId) {
+            if (!targetId || beans.some(bean => bean.id === targetId)) return;
+            const generated = generatedBeanTemplates();
+            const found = generated.find(bean => bean.id === targetId);
+            if (!found) return;
+            beans = [found, ...beans];
+        }
+
         // Deep link router to detect scan action
         function handleUrlDeepLink() {
             const hash = window.location.hash;
             if (hash && hash.startsWith('#bean-')) {
                 const id = hash.replace('#bean-', '');
+                mergeGeneratedTemplatesForDeepLink(id);
                 const found = beans.find(b => b.id === id);
                 if (found) {
                     selectBean(id);
@@ -1979,13 +2025,13 @@
         }
 
         function addGeneratedBeanTemplates() {
-            if (!Array.isArray(window.BEAN_TEMPLATE_IMPORT) || window.BEAN_TEMPLATE_IMPORT.length === 0) {
+            const templates = generatedBeanTemplates();
+            if (templates.length === 0) {
                 alert('生豆テンプレートファイル beans_import.js が読み込めませんでした。');
                 return;
             }
 
             const currentById = new Map(beans.map(bean => [bean.id, bean]));
-            const templates = window.BEAN_TEMPLATE_IMPORT.map(normalizeBeanRecord);
             let addedCount = 0;
             let skippedCount = 0;
 
