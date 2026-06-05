@@ -1,0 +1,32 @@
+[
+  {
+    "labelId": "label-1-20260528",
+    "beanId": "1",
+    "sourceBeanName": "エチオピア イルガチェフェ G1",
+    "beanName": "エチオピア イルガチェフェ G1",
+    "countries": [
+      "ETHIOPIA"
+    ],
+    "originText": "ETHIOPIA",
+    "roast": "浅煎り",
+    "roastLevelValue": 1,
+    "process": "",
+    "processLabel": "-",
+    "grind": "豆のまま",
+    "weight": "250g",
+    "roastDate": "2026-05-28",
+    "agingStatus": "飲み頃ピーク！",
+    "bestBefore": "2026.08.27",
+    "tasteProfile": {
+      "sour": 4.5,
+      "bitter": 1.5,
+      "sweet": 3.5,
+      "body": 2,
+      "aroma": 4.8
+    },
+    "notes": "ジャスミンのような華やかなアロマと、レモンティーを思わせる軽やかで透き通る酸味。朝の一杯に最適。",
+    "status": "published",
+    "createdAt": "2026-06-05T15:36:29+09:00",
+    "updatedAt": "2026-06-05T15:36:29+09:00"
+  }
+]

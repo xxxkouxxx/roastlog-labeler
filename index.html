@@ -573,6 +573,7 @@
         ];
 
         let beans = [];
+        let publicLabels = [];
         let selectedBeanId = null;
         let isQrViewMode = false;
         let activeTheme = 'front';
@@ -617,17 +618,18 @@
         }
 
         function getQrPayload(bean) {
+            const labelId = labelIdForBean(bean);
             const publicUrl = getPublicAppUrl();
             if (publicUrl) {
-                return `${normalizePublicUrl(publicUrl)}/#label-${bean.id}`;
+                return `${normalizePublicUrl(publicUrl)}/#label-${labelId}`;
             }
 
             if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
                 const baseUrl = window.location.origin + window.location.pathname;
-                return `${baseUrl}#label-${bean.id}`;
+                return `${baseUrl}#label-${labelId}`;
             }
 
-            return `ROASTLOG:${bean.id}`;
+            return `ROASTLOG:${labelId}`;
         }
 
         function updateQrPayloadNote(bean) {
@@ -1303,7 +1305,7 @@
             ctx.restore();
         }
 
-        window.onload = function() {
+        window.onload = async function() {
             lucide.createIcons();
             isQrViewMode = isLabelDeepLink();
             document.body.classList.toggle('qr-view', isQrViewMode);
@@ -1317,6 +1319,7 @@
                 localStorage.setItem('roastlog_beans', JSON.stringify(beans));
             }
 
+            publicLabels = await loadPublicLabels();
             renderBeansList();
 
             // QR Code Auto Routing (Deep linking feature)
@@ -1339,6 +1342,21 @@
                 : [];
         }
 
+        async function loadPublicLabels() {
+            if (!(window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
+                return [];
+            }
+
+            try {
+                const response = await fetch('labels.json', { cache: 'no-store' });
+                if (!response.ok) return [];
+                const content = await response.json();
+                return Array.isArray(content) ? content.map(normalizeLabelRecord) : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
         function mergeGeneratedTemplatesForDeepLink(targetId) {
             if (!targetId || beans.some(bean => bean.id === targetId)) return;
             const generated = generatedBeanTemplates();
@@ -1352,13 +1370,21 @@
             const hash = window.location.hash;
             if (hash && hash.startsWith('#label-')) {
                 const id = deepLinkId('#label-');
-                mergeGeneratedTemplatesForDeepLink(id);
-                const found = beans.find(b => b.id === id);
-                if (found) {
-                    selectBean(id, { preserveHash: true });
-                    showToast(`「${found.name}」のラベル情報を表示しています`);
+                const foundLabel = publicLabels.find(label => label.labelId === id);
+                if (foundLabel) {
+                    const labelBean = labelToBeanRecord(foundLabel);
+                    beans = [labelBean, ...beans.filter(bean => bean.id !== labelBean.id)];
+                    selectBean(labelBean.id, { preserveHash: true });
+                    showToast(`「${foundLabel.beanName}」のラベル情報を表示しています`);
                 } else {
-                    updateUIState();
+                    mergeGeneratedTemplatesForDeepLink(id);
+                    const foundBean = beans.find(b => b.id === id);
+                    if (foundBean) {
+                        selectBean(id, { preserveHash: true });
+                        showToast(`「${foundBean.name}」のラベル情報を表示しています`);
+                    } else {
+                        updateUIState();
+                    }
                 }
             } else if (hash && hash.startsWith('#bean-')) {
                 const id = deepLinkId('#bean-');
@@ -2101,6 +2127,61 @@
                 aroma: Number.isFinite(Number(source.aroma)) ? Number(source.aroma) : 3,
                 notes: String(source.notes || '')
             };
+        }
+
+        function normalizeLabelRecord(label, index = 0) {
+            const source = label && typeof label === 'object' ? label : {};
+            const profile = source.tasteProfile && typeof source.tasteProfile === 'object' ? source.tasteProfile : {};
+            const countries = normalizeCountryNames(source.countries || inferCountriesFromOrigin(source.originText || source.beanName));
+            return {
+                labelId: String(source.labelId || `label-${Date.now() + index}`),
+                beanId: String(source.beanId || ''),
+                sourceBeanName: String(source.sourceBeanName || source.beanName || '名称未設定'),
+                beanName: String(source.beanName || source.sourceBeanName || '名称未設定'),
+                countries,
+                originText: String(source.originText || originTextFromCountries(countries)),
+                roast: String(source.roast || '中煎り'),
+                roastLevelValue: Number.isFinite(Number(source.roastLevelValue)) ? Number(source.roastLevelValue) : roastLevelInfo(source.roast).value,
+                process: String(source.process || ''),
+                processLabel: String(source.processLabel || ''),
+                grind: String(source.grind || '豆のまま'),
+                weight: String(source.weight || '250g'),
+                roastDate: String(source.roastDate || ''),
+                agingStatus: String(source.agingStatus || ''),
+                bestBefore: String(source.bestBefore || ''),
+                tasteProfile: {
+                    sour: Number.isFinite(Number(profile.sour)) ? Number(profile.sour) : 3,
+                    bitter: Number.isFinite(Number(profile.bitter)) ? Number(profile.bitter) : 3,
+                    sweet: Number.isFinite(Number(profile.sweet)) ? Number(profile.sweet) : 3,
+                    body: Number.isFinite(Number(profile.body)) ? Number(profile.body) : 3,
+                    aroma: Number.isFinite(Number(profile.aroma)) ? Number(profile.aroma) : 3
+                },
+                notes: String(source.notes || ''),
+                status: String(source.status || 'published'),
+                createdAt: String(source.createdAt || ''),
+                updatedAt: String(source.updatedAt || '')
+            };
+        }
+
+        function labelToBeanRecord(label) {
+            const normalizedLabel = normalizeLabelRecord(label);
+            return normalizeBeanRecord({
+                id: normalizedLabel.labelId,
+                name: normalizedLabel.beanName,
+                origin: normalizedLabel.originText,
+                countries: normalizedLabel.countries,
+                roast: normalizedLabel.roast,
+                process: normalizedLabel.process,
+                roastDate: normalizedLabel.roastDate,
+                grind: normalizedLabel.grind,
+                weight: normalizedLabel.weight,
+                sour: normalizedLabel.tasteProfile.sour,
+                bitter: normalizedLabel.tasteProfile.bitter,
+                sweet: normalizedLabel.tasteProfile.sweet,
+                body: normalizedLabel.tasteProfile.body,
+                aroma: normalizedLabel.tasteProfile.aroma,
+                notes: normalizedLabel.notes
+            });
         }
 
         function importData() {
