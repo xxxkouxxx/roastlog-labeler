@@ -105,6 +105,35 @@
         body.qr-view #detail-card {
             border-radius: 12px;
         }
+
+        @media (max-width: 640px) {
+            body.qr-view header {
+                position: static;
+            }
+
+            body.qr-view main {
+                padding: 1rem 1rem 2.5rem;
+            }
+
+            body.qr-view #detail-workspace {
+                gap: 1rem;
+            }
+
+            body.qr-view #detail-card {
+                padding: 1.25rem;
+                border-radius: 10px;
+            }
+
+            body.qr-view #detail-name {
+                font-size: 1.55rem;
+                line-height: 1.35;
+            }
+
+            body.qr-view #detail-card .grid {
+                gap: 1rem;
+                padding-top: 1rem;
+            }
+        }
     </style>
 </head>
 <body class="text-coffee-900 min-h-screen flex flex-col pb-16 md:pb-0">
