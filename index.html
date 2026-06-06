@@ -213,6 +213,19 @@
                         生豆テンプレート25件を追加
                     </button>
                 </div>
+
+                <div class="bg-white p-4 rounded-xl border border-coffee-200 shadow-sm text-xs text-coffee-700 space-y-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center space-x-1.5 font-bold text-coffee-800">
+                            <i data-lucide="globe-2" class="w-4 h-4 text-coffee-600"></i>
+                            <span>公開中ラベル</span>
+                        </div>
+                        <span id="public-label-count" class="text-[10px] font-black bg-coffee-100 text-coffee-700 px-2 py-1 rounded-full">0 PUBLIC</span>
+                    </div>
+                    <div id="public-labels-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        <p class="text-[11px] leading-relaxed text-coffee-500">公開中のラベルはまだ読み込まれていません。</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Right Side: Details & Label Engine -->
@@ -608,6 +621,7 @@
 
         let beans = [];
         let publicLabels = [];
+        let remotePublicLabels = [];
         let selectedBeanId = null;
         let isQrViewMode = false;
         let activeTheme = 'front';
@@ -664,6 +678,21 @@
 
         function getQrPayload(bean) {
             const labelId = labelIdForBean(bean);
+            const publicUrl = getPublicAppUrl();
+            if (publicUrl) {
+                return `${normalizePublicUrl(publicUrl)}/#label-${labelId}`;
+            }
+
+            if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                const baseUrl = window.location.origin + window.location.pathname;
+                return `${baseUrl}#label-${labelId}`;
+            }
+
+            return `ROASTLOG:${labelId}`;
+        }
+
+        function getPublicLabelUrl(label) {
+            const labelId = canonicalLabelId(label?.labelId || '');
             const publicUrl = getPublicAppUrl();
             if (publicUrl) {
                 return `${normalizePublicUrl(publicUrl)}/#label-${labelId}`;
@@ -1370,6 +1399,7 @@
 
             publicLabels = await loadPublicLabels();
             renderBeansList();
+            renderPublicLabelsList();
 
             // QR Code Auto Routing (Deep linking feature)
             // #bean-ID opens the manager with that bean selected.
@@ -1394,16 +1424,22 @@
         async function loadPublicLabels() {
             const draftLabels = loadDraftLabels();
             if (!(window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
+                remotePublicLabels = [];
                 return draftLabels;
             }
 
             try {
                 const response = await fetch('labels.json', { cache: 'no-store' });
-                if (!response.ok) return draftLabels;
+                if (!response.ok) {
+                    remotePublicLabels = [];
+                    return draftLabels;
+                }
                 const content = await response.json();
                 const remoteLabels = Array.isArray(content) ? content.map(normalizeLabelRecord) : [];
+                remotePublicLabels = mergeLabelCollections(remoteLabels).filter(isPublishedLabel);
                 return mergeLabelCollections(remoteLabels, draftLabels);
             } catch (error) {
+                remotePublicLabels = [];
                 return draftLabels;
             }
         }
@@ -1419,6 +1455,84 @@
 
         function saveDraftLabels(labels) {
             localStorage.setItem(LABELS_DRAFT_KEY, JSON.stringify(labels.map(normalizeLabelRecord)));
+        }
+
+        function isPublishedLabel(label) {
+            return String(label?.status || 'published') === 'published';
+        }
+
+        function renderPublicLabelsList() {
+            const listContainer = document.getElementById('public-labels-list');
+            const countBadge = document.getElementById('public-label-count');
+            if (!listContainer || !countBadge) return;
+
+            const labels = remotePublicLabels.filter(isPublishedLabel);
+            countBadge.textContent = `${labels.length} PUBLIC`;
+
+            if (labels.length === 0) {
+                listContainer.innerHTML = `
+                    <p class="text-[11px] leading-relaxed text-coffee-500">
+                        labels.json に公開中のラベルはありません。
+                    </p>
+                `;
+                return;
+            }
+
+            listContainer.innerHTML = labels.map(label => {
+                const roastColor = roastColorClass(label.roast);
+                return `
+                    <div class="rounded-lg border border-coffee-200 bg-coffee-50/40 p-2.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <button type="button" onclick="openPublicLabel('${label.labelId}')" class="min-w-0 flex-1 text-left">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <span class="text-[9px] font-black tracking-widest text-coffee-400 uppercase">${escapeHtml(label.originText || originTextFromCountries(label.countries))}</span>
+                                    <span class="text-[8px] text-white px-1.5 py-0.5 rounded font-black ${roastColor}">${escapeHtml(label.roast)}</span>
+                                </div>
+                                <div class="font-black text-coffee-900 text-xs truncate">${escapeHtml(label.beanName)}</div>
+                                <div class="mt-1 text-[10px] font-bold text-coffee-500">${escapeHtml(roastDateText(label, '/'))} / ${escapeHtml(label.weight || '-')}</div>
+                            </button>
+                            <button type="button" onclick="copyPublicLabelUrl('${label.labelId}')" class="shrink-0 p-1.5 rounded-lg text-coffee-500 hover:text-coffee-800 hover:bg-white" title="公開URLをコピー">
+                                <i data-lucide="link" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function findPublicLabel(labelId) {
+            return remotePublicLabels.find(label => label.labelId === canonicalLabelId(labelId));
+        }
+
+        function openPublicLabel(labelId) {
+            const label = findPublicLabel(labelId);
+            if (!label) {
+                showToast('公開ラベルが見つかりませんでした', 'error');
+                return;
+            }
+
+            const labelBean = labelToBeanRecord(label);
+            beans = [labelBean, ...beans.filter(bean => bean.id !== labelBean.id)];
+            selectBean(labelBean.id);
+            showToast(`「${label.beanName}」の公開ラベルを表示しました`);
+        }
+
+        async function copyPublicLabelUrl(labelId) {
+            const label = findPublicLabel(labelId);
+            if (!label) {
+                showToast('公開ラベルが見つかりませんでした', 'error');
+                return;
+            }
+
+            const url = getPublicLabelUrl(label);
+            try {
+                await copyTextToClipboard(url);
+                showToast(`公開URLをコピーしました: ${url}`);
+            } catch (error) {
+                showToast('公開URLのコピーに失敗しました', 'error');
+            }
         }
 
         function mergeLabelCollections(...collections) {
