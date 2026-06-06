@@ -259,31 +259,24 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 pt-4 border-t border-coffee-100">
                             <!-- Specs -->
-                            <div class="md:col-span-6 space-y-3.5 text-xs">
+                            <div class="md:col-span-6 space-y-4 text-xs">
                                 <div>
                                     <span class="text-[10px] text-coffee-400 block font-bold tracking-wider uppercase">焙煎日 (Roast Date)</span>
-                                    <div class="flex items-center text-coffee-700 font-bold mt-1">
+                                    <div class="flex flex-wrap items-center gap-y-1 text-coffee-700 font-bold mt-1.5">
                                         <i data-lucide="calendar" class="w-4 h-4 mr-1.5 text-coffee-500"></i>
                                         <span id="detail-roast-date" class="font-mono text-sm">2026/05/25</span>
                                         <span id="detail-days-ago" class="ml-1.5 text-[10px] font-normal text-coffee-400">(7日前)</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <span class="text-[10px] text-coffee-400 block font-bold tracking-wider uppercase">推奨抽出 / 挽き方</span>
-                                    <div class="flex items-center text-coffee-700 font-bold mt-1">
-                                        <i data-lucide="settings-2" class="w-4 h-4 mr-1.5 text-coffee-500"></i>
-                                        <span id="detail-grind">中挽き (Medium Grind)</span>
-                                    </div>
-                                </div>
-                                <div>
                                     <span class="text-[10px] text-coffee-400 block font-bold tracking-wider uppercase">ガス抜き・エイジングステータス</span>
-                                    <div class="mt-1" id="detail-aging-status-badge">
+                                    <div class="mt-1.5" id="detail-aging-status-badge">
                                         <!-- Dynamic Aging Badge -->
                                     </div>
                                 </div>
                                 <div>
                                     <span class="text-[10px] text-coffee-400 block font-bold tracking-wider uppercase">詳細メモ</span>
-                                    <p id="detail-notes" class="text-coffee-600 bg-coffee-50/70 p-3 rounded-xl leading-relaxed mt-1 border border-coffee-100 italic">
+                                    <p id="detail-notes" class="min-h-[112px] text-coffee-600 bg-coffee-50/70 p-4 rounded-xl leading-7 mt-1.5 border border-coffee-100 italic">
                                         チョコレートのような甘みと、上品なシトラス系の酸味。
                                     </p>
                                 </div>
@@ -355,7 +348,6 @@
                                         <h4 id="lbl-name" class="text-base font-black tracking-tight leading-tight max-w-full truncate px-1">アンティグア SHB</h4>
                                         <div class="flex items-center justify-center space-x-1.5 mt-1">
                                             <span id="lbl-roast" class="text-[9px] bg-black text-white px-1 py-0.2 rounded font-bold">やや深煎り</span>
-                                            <span id="lbl-grind" class="text-[9px] border border-black px-1 py-0.2 rounded font-bold">中挽き</span>
                                         </div>
                                         <span id="lbl-process" class="hidden"></span>
                                     </div>
@@ -1779,7 +1771,6 @@
             document.getElementById('detail-name').textContent = bean.name;
             document.getElementById('detail-origin').textContent = beanOriginText(bean);
             document.getElementById('detail-roast-date').textContent = roastDateText(bean, '/');
-            document.getElementById('detail-grind').textContent = bean.grind;
             document.getElementById('detail-notes').textContent = bean.notes || "メモ・抽出レシピはありません。";
 
             const roastBadge = document.getElementById('detail-roast-badge');
@@ -1791,7 +1782,7 @@
 
             const agingBadgeContainer = document.getElementById('detail-aging-status-badge');
             agingBadgeContainer.innerHTML = `
-                <div class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold ${agingInfo.colorClass} border border-current/10">
+                <div class="inline-flex items-center px-3 py-1.5 rounded-lg text-[11px] font-bold ${agingInfo.colorClass} border border-current/10">
                     <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5 animate-pulse"></span>
                     ${agingInfo.text}
                 </div>
@@ -1852,7 +1843,6 @@
             document.getElementById('lbl-origin').textContent = modernOriginText(bean);
             document.getElementById('lbl-name').textContent = bean.name;
             document.getElementById('lbl-roast').textContent = bean.roast;
-            document.getElementById('lbl-grind').textContent = bean.grind;
             const process = document.getElementById('lbl-process');
             process.textContent = processLabel(bean) === '-' ? '' : processLabel(bean);
             document.getElementById('lbl-roast-date').textContent = roastDateText(bean);
@@ -1876,7 +1866,6 @@
                     <h4 id="lbl-name" class="text-base font-black tracking-tight leading-tight max-w-full truncate px-1">COFFEE</h4>
                     <div class="flex items-center justify-center space-x-1.5 mt-1">
                         <span id="lbl-roast" class="text-[9px] bg-black text-white px-1 py-0.2 rounded font-bold">ROAST</span>
-                        <span id="lbl-grind" class="text-[9px] border border-black px-1 py-0.2 rounded font-bold">GRIND</span>
                     </div>
                     <span id="lbl-process" class="hidden"></span>
                 </div>
@@ -1971,7 +1960,7 @@
                     <div class="font-black tracking-[0.2em]">精製方法</div><div>${escapeHtml(processLabel(bean))}</div>
                     <div class="font-black tracking-[0.2em]">焙煎日</div><div class="font-black text-2xl leading-none tracking-wider">${escapeHtml(roastDateText(bean))}</div>
                     <div class="font-black tracking-[0.2em]">保存方法</div><div>高温多湿を避けて保存。</div>
-                    <div class="font-black tracking-[0.2em]">挽き方</div><div>${escapeHtml(textOrDash(bean.grind))} / ${escapeHtml(textOrDash(bean.roast))}</div>
+                    <div class="font-black tracking-[0.2em]">焙煎度</div><div>${escapeHtml(textOrDash(bean.roast))}</div>
                 </div>
                 <div class="my-3 border-t border-black"></div>
                 <div class="text-[10px] leading-relaxed font-bold">
@@ -2051,7 +2040,6 @@
             const frame = document.getElementById('label-design-frame');
             const origin = document.getElementById('lbl-origin');
             const roastBadge = document.getElementById('lbl-roast');
-            const grindBadge = document.getElementById('lbl-grind');
             const title = document.getElementById('lbl-name');
             const bottomArea = document.getElementById('label-bottom-area');
             const dateBlock = document.getElementById('label-date-block');
@@ -2091,7 +2079,6 @@
                 if (agingIndicator) agingIndicator.className = "text-[10px] font-bold";
                 if (bestBefore) bestBefore.className = "mt-1 block text-[10px] font-bold";
                 roastBadge.className = "text-[10px] bg-black text-white px-2 py-0.5 rounded font-bold";
-                grindBadge.className = "text-[10px] border border-black px-2 py-0.5 rounded font-bold";
                 if (process) process.className = "mt-2 block min-h-[16px] text-[11px] font-bold";
             }
         }
@@ -2688,7 +2675,7 @@
                 ['精製方法', processLabel(bean)],
                 ['焙煎日', roastDateText(bean)],
                 ['保存方法', '高温多湿を避けて保存。'],
-                ['挽き方', `${textOrDash(bean.grind)} / ${textOrDash(bean.roast)}`]
+                ['焙煎度', textOrDash(bean.roast)]
             ];
 
             rows.forEach(([label, value]) => {
@@ -2840,7 +2827,7 @@
             }
 
             ctx.font = `bold ${modernLayout ? 21 : 20}px "Noto Sans JP", sans-serif`;
-            ctx.fillText(`[${bean.roast}]  [${bean.grind}]`, width / 2, height * (modernLayout ? 0.485 : 0.56));
+            ctx.fillText(`[${bean.roast}]`, width / 2, height * (modernLayout ? 0.485 : 0.56));
             const process = processLabel(bean);
             if (modernLayout && process !== '-') {
                 ctx.font = 'bold 18px "Noto Sans JP", sans-serif';
