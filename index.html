@@ -907,7 +907,11 @@
 
         function labelIdForBean(bean) {
             const roastDatePart = hasRoastDate(bean) ? bean.roastDate.replace(/-/g, '') : 'unroasted';
-            return `${slugForId(bean?.id || bean?.name)}-${roastDatePart}`;
+            const baseId = canonicalLabelId(String(bean?.id || '').replace(/^bean-/, ''));
+            if (baseId && baseId.endsWith(`-${roastDatePart}`)) {
+                return slugForId(baseId);
+            }
+            return `${slugForId(baseId || bean?.name)}-${roastDatePart}`;
         }
 
         function canonicalLabelId(value) {
