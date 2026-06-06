@@ -1,5 +1,36 @@
 [
   {
+    "labelId": "1780728209035-20260606",
+    "beanId": "1780728209035",
+    "sourceBeanName": "ふかいりブレンド",
+    "beanName": "ふかいりブレンド",
+    "countries": [
+      "BRAZIL",
+      "INDIA"
+    ],
+    "originText": "BRAZIL / INDIA",
+    "roast": "深煎り",
+    "roastLevelValue": 5,
+    "process": "",
+    "processLabel": "-",
+    "grind": "豆のまま",
+    "weight": "200g",
+    "roastDate": "2026-06-06",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.09.05",
+    "tasteProfile": {
+      "sour": 0.5,
+      "bitter": 4,
+      "sweet": 3,
+      "body": 5,
+      "aroma": 3
+    },
+    "notes": "ナッツ、ミルクチョコレート、キャラメルのようなマイルドな甘みと後から力強いコクが追いかけてくる感じ",
+    "status": "published",
+    "createdAt": "2026-06-06T15:44:44+09:00",
+    "updatedAt": "2026-06-06T15:44:44+09:00"
+  },
+  {
     "labelId": "1780642536293-20260605",
     "beanId": "1780642536293",
     "sourceBeanName": "アルトマヨの森 アルトサンファン コーヒー",
