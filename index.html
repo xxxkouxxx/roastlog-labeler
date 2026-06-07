@@ -244,6 +244,7 @@
                                     <span id="detail-process-badge" class="hidden text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-coffee-50 text-coffee-600 border border-coffee-200">WASHED</span>
                                 </div>
                                 <h2 id="detail-name" class="text-xl md:text-2xl font-black text-coffee-800 font-serif-title">アンティグア SHB</h2>
+                                <p id="detail-origin-story" class="hidden text-[11px] text-coffee-500 leading-relaxed mt-1.5 max-w-prose whitespace-pre-line"></p>
                             </div>
                             <div class="editor-actions flex space-x-1">
                                 <button onclick="createRoastFromCurrentTemplate()" class="p-2 text-coffee-500 hover:text-coffee-800 hover:bg-coffee-100 rounded-xl transition-all" title="この豆から焙煎ラベルを作成">
@@ -565,6 +566,13 @@
                     <textarea id="form-notes" rows="3" placeholder="例: 地域、農園、ロット、農家、WS、品種、抽出メモなど" class="w-full px-3 py-2 border border-coffee-200 rounded-xl text-xs focus:ring-2 focus:ring-coffee-500 focus:outline-none"></textarea>
                 </div>
 
+                <!-- Origin Story Supplement -->
+                <div>
+                    <label class="block text-[11px] font-bold text-coffee-600 mb-1">産地の雰囲気・補足（このロットならでは）</label>
+                    <textarea id="form-origin-note" rows="2" placeholder="例: 今回のロットは○○農園との直接取引で、収穫時期の天候にも恵まれた一枠です" class="w-full px-3 py-2 border border-coffee-200 rounded-xl text-xs focus:ring-2 focus:ring-coffee-500 focus:outline-none"></textarea>
+                    <p class="text-[10px] text-coffee-400 mt-1">産地共通の紹介文は <code class="bg-coffee-50 px-1 rounded">ORIGIN_STORIES</code>（コード内）で管理し、ここでは今回のロットだけの補足を書きます。ブレンドは産地共通の紹介文を表示しないため、ここにブレンドならではの話をまとめて書いてください。</p>
+                </div>
+
                 <!-- Action Buttons -->
                 <div class="flex items-center justify-end space-x-2 pt-4 border-t border-coffee-100">
                     <button type="button" onclick="closeModal()" class="px-4 py-2 border border-coffee-200 text-coffee-600 hover:bg-coffee-50 rounded-xl text-xs font-bold transition-all">キャンセル</button>
@@ -649,6 +657,27 @@
             { name: 'YEMEN', code: 'YEM', aliases: ['YEMEN', 'イエメン'] },
             { name: 'JAMAICA', code: 'JAM', aliases: ['JAMAICA', 'ジャマイカ', 'BLUE MOUNTAIN', 'ブルーマウンテン'] }
         ];
+
+        // 産地共通の紹介文（雰囲気を伝える短い文章）。
+        // キーは COUNTRY_OPTIONS の name と一致させる。ロット個別の補足は
+        // 各豆の「産地の雰囲気・補足」欄（originNote）に書き、ここでは
+        // 国・地域単位で使い回せる基本紹介だけを管理する。
+        // 例: 'RWANDA': 'キブ湖周辺の丘陵地で育つ豆。標高や微気候の違いが、農家ごとの個性につながっています。',
+        const ORIGIN_STORIES = {};
+
+        function originStoryText(bean) {
+            const countries = beanCountryNames(bean);
+            const note = String(bean?.originNote || '').trim();
+            // ブレンド（複数国）は各国の紹介文を積み上げると長くなり趣旨と合わないため、
+            // 産地共通の紹介文はシングルオリジンの豆だけに使う。ブレンドの物語は
+            // 「産地の雰囲気・補足」欄（originNote）にまとめて書いてもらう想定。
+            if (countries.length !== 1) {
+                return note;
+            }
+            const base = String(ORIGIN_STORIES[countries[0]] || '').trim();
+            return [base, note].filter(Boolean).join('\n');
+        }
+
         let selectedCountries = [];
 
         function getPublicAppUrl() {
@@ -936,6 +965,7 @@
                 bestBefore: bestBeforeText(normalizedBean),
                 tasteProfile: tasteProfile(normalizedBean),
                 notes: normalizedBean.notes || '',
+                originNote: normalizedBean.originNote || '',
                 status: options.status || 'published',
                 createdAt: options.createdAt || timestamp,
                 updatedAt: options.updatedAt || timestamp
@@ -1780,6 +1810,12 @@
 
             document.getElementById('detail-name').textContent = bean.name;
             document.getElementById('detail-origin').textContent = beanOriginText(bean);
+
+            const originStoryEl = document.getElementById('detail-origin-story');
+            const originStory = originStoryText(bean);
+            originStoryEl.textContent = originStory;
+            originStoryEl.classList.toggle('hidden', !originStory);
+
             document.getElementById('detail-roast-date').textContent = roastDateText(bean, '/');
             document.getElementById('detail-notes').textContent = bean.notes || "メモ・抽出レシピはありません。";
 
@@ -2204,6 +2240,7 @@
             });
 
             document.getElementById('form-notes').value = bean.notes || '';
+            document.getElementById('form-origin-note').value = bean.originNote || '';
         }
 
         function createRoastFromCurrentTemplate() {
@@ -2254,7 +2291,8 @@
                 sweet: parseFloat(document.getElementById('form-sweet').value),
                 body: parseFloat(document.getElementById('form-body').value),
                 aroma: parseFloat(document.getElementById('form-aroma').value),
-                notes: document.getElementById('form-notes').value
+                notes: document.getElementById('form-notes').value,
+                originNote: document.getElementById('form-origin-note').value
             };
 
             if (id) {
@@ -2364,7 +2402,8 @@
                 sweet: Number.isFinite(Number(source.sweet)) ? Number(source.sweet) : 3,
                 body: Number.isFinite(Number(source.body)) ? Number(source.body) : 3,
                 aroma: Number.isFinite(Number(source.aroma)) ? Number(source.aroma) : 3,
-                notes: String(source.notes || '')
+                notes: String(source.notes || ''),
+                originNote: String(source.originNote || '')
             };
         }
 
@@ -2396,6 +2435,7 @@
                     aroma: Number.isFinite(Number(profile.aroma)) ? Number(profile.aroma) : 3
                 },
                 notes: String(source.notes || ''),
+                originNote: String(source.originNote || ''),
                 status: String(source.status || 'published'),
                 createdAt: String(source.createdAt || ''),
                 updatedAt: String(source.updatedAt || '')
@@ -2419,7 +2459,8 @@
                 sweet: normalizedLabel.tasteProfile.sweet,
                 body: normalizedLabel.tasteProfile.body,
                 aroma: normalizedLabel.tasteProfile.aroma,
-                notes: normalizedLabel.notes
+                notes: normalizedLabel.notes,
+                originNote: normalizedLabel.originNote
             });
         }
 
