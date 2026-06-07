@@ -242,6 +242,9 @@
                                     <span id="detail-origin" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-coffee-100 text-coffee-700">GUATEMALA</span>
                                     <span id="detail-roast-badge" class="text-[10px] font-black px-2 py-0.5 rounded text-white bg-amber-800">やや深煎り</span>
                                     <span id="detail-process-badge" class="hidden text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-coffee-50 text-coffee-600 border border-coffee-200">WASHED</span>
+                                    <span id="detail-source-badge" class="hidden text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 text-sky-700 border border-sky-200">
+                                        <i data-lucide="globe" class="w-3 h-3 inline -mt-0.5 mr-0.5"></i>公開ラベルを表示中
+                                    </span>
                                 </div>
                                 <h2 id="detail-name" class="text-xl md:text-2xl font-black text-coffee-800 font-serif-title">アンティグア SHB</h2>
                                 <p id="detail-origin-story" class="hidden text-[11px] text-coffee-500 leading-relaxed mt-1.5 max-w-prose whitespace-pre-line"></p>
@@ -643,6 +646,7 @@
         let beans = [];
         let publicLabels = [];
         let remotePublicLabels = [];
+        let viewingPublicLabelBean = null; // 公開ラベルから開いた閲覧専用のbean（beansには入れない）
         let selectedBeanId = null;
         let isQrViewMode = false;
         let activeTheme = 'front';
@@ -1562,6 +1566,13 @@
             return remotePublicLabels.find(label => label.labelId === canonicalLabelId(labelId));
         }
 
+        function getCurrentBean() {
+            if (viewingPublicLabelBean && viewingPublicLabelBean.id === selectedBeanId) {
+                return viewingPublicLabelBean;
+            }
+            return beans.find(b => b.id === selectedBeanId);
+        }
+
         function openPublicLabel(labelId) {
             const label = findPublicLabel(labelId);
             if (!label) {
@@ -1569,9 +1580,10 @@
                 return;
             }
 
-            const labelBean = labelToBeanRecord(label);
-            beans = [labelBean, ...beans.filter(bean => bean.id !== labelBean.id)];
-            selectBean(labelBean.id);
+            viewingPublicLabelBean = labelToBeanRecord(label);
+            selectedBeanId = viewingPublicLabelBean.id;
+            updateUIState();
+            renderBeansList();
             showToast(`「${label.beanName}」の公開ラベルを表示しました`);
         }
 
@@ -1623,9 +1635,10 @@
                 const id = deepLinkId('#label-');
                 const foundLabel = publicLabels.find(label => label.labelId === id);
                 if (foundLabel) {
-                    const labelBean = labelToBeanRecord(foundLabel);
-                    beans = [labelBean, ...beans.filter(bean => bean.id !== labelBean.id)];
-                    selectBean(labelBean.id, { preserveHash: true });
+                    viewingPublicLabelBean = labelToBeanRecord(foundLabel);
+                    selectedBeanId = viewingPublicLabelBean.id;
+                    updateUIState();
+                    renderBeansList();
                     showToast(`「${foundLabel.beanName}」のラベル情報を表示しています`);
                 } else {
                     mergeGeneratedTemplatesForDeepLink(id);
@@ -1792,6 +1805,7 @@
         }
 
         function selectBean(id, options = {}) {
+            viewingPublicLabelBean = null;
             selectedBeanId = id;
             updateUIState();
             renderBeansList();
@@ -1866,8 +1880,16 @@
             workspace.classList.remove('hidden');
             placeholder.classList.add('hidden');
 
-            const bean = beans.find(b => b.id === selectedBeanId);
+            const bean = getCurrentBean();
             if (!bean) return;
+
+            const isViewingPublicLabel = !!viewingPublicLabelBean && viewingPublicLabelBean.id === bean.id;
+            const sourceBadge = document.getElementById('detail-source-badge');
+            sourceBadge.classList.toggle('hidden', !isViewingPublicLabel);
+            const editorActions = document.querySelector('#detail-card .editor-actions');
+            if (editorActions) {
+                editorActions.classList.toggle('hidden', isViewingPublicLabel);
+            }
 
             document.getElementById('detail-name').textContent = bean.name;
             document.getElementById('detail-origin').textContent = beanOriginText(bean);
@@ -2317,7 +2339,7 @@
         }
 
         function createRoastFromCurrentTemplate() {
-            const bean = beans.find(b => b.id === selectedBeanId);
+            const bean = getCurrentBean();
             if (!bean) return;
 
             document.getElementById('modal-title').innerHTML = `<i data-lucide="copy-plus" class="w-4.5 h-4.5 mr-1.5 text-coffee-600"></i>テンプレートから焙煎ラベルを作成`;
@@ -2328,7 +2350,7 @@
         }
 
         function editCurrentBean() {
-            const bean = beans.find(b => b.id === selectedBeanId);
+            const bean = getCurrentBean();
             if (!bean) return;
 
             document.getElementById('modal-title').innerHTML = `<i data-lucide="edit-2" class="w-4.5 h-4.5 mr-1.5 text-coffee-600"></i>豆情報を編集`;
@@ -2381,7 +2403,7 @@
         }
 
         function deleteCurrentBean() {
-            const targetBean = beans.find(b => b.id === selectedBeanId);
+            const targetBean = getCurrentBean();
             if (!targetBean) return;
 
             const confirmDelete = window.confirm(`本当に「${targetBean.name}」を削除しますか？`);
