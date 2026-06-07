@@ -377,6 +377,15 @@
                             </div>
                         </div>
 
+                        <!-- QR Detail Page Story Preview (confirmation only, not printed on the physical label) -->
+                        <div id="qr-story-preview" class="hidden bg-coffee-50 border border-coffee-200 rounded-xl p-3 text-xs text-coffee-600">
+                            <p class="font-bold text-coffee-700 mb-1 flex items-center">
+                                <i data-lucide="smartphone" class="w-3.5 h-3.5 mr-1.5"></i>
+                                QRページ（スマホ）ではこう表示されます
+                            </p>
+                            <p id="qr-story-preview-text" class="leading-relaxed whitespace-pre-line"></p>
+                        </div>
+
                         <!-- Actions -->
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3.5">
                             <button onclick="downloadLabelImage()" class="flex items-center justify-center bg-coffee-100 hover:bg-coffee-200 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
@@ -1882,7 +1891,17 @@
             });
         }
 
+        function updateQrStoryPreview(bean) {
+            const wrap = document.getElementById('qr-story-preview');
+            const textEl = document.getElementById('qr-story-preview-text');
+            if (!wrap || !textEl) return;
+            const story = originStoryText(bean);
+            textEl.textContent = story;
+            wrap.classList.toggle('hidden', !story);
+        }
+
         function generateLabelPreview(bean) {
+            updateQrStoryPreview(bean);
             if (activeTheme === 'front') {
                 renderFrontPreview(bean);
                 return;
