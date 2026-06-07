@@ -241,6 +241,7 @@
                                 <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
                                     <span id="detail-origin" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-coffee-100 text-coffee-700">GUATEMALA</span>
                                     <span id="detail-roast-badge" class="text-[10px] font-black px-2 py-0.5 rounded text-white bg-amber-800">やや深煎り</span>
+                                    <span id="detail-process-badge" class="hidden text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-coffee-50 text-coffee-600 border border-coffee-200">WASHED</span>
                                 </div>
                                 <h2 id="detail-name" class="text-xl md:text-2xl font-black text-coffee-800 font-serif-title">アンティグア SHB</h2>
                             </div>
@@ -1022,6 +1023,15 @@
             }[processCode(bean)] || '-';
         }
 
+        function processBadgeText(bean) {
+            return {
+                N: 'NATURAL',
+                W: 'WASHED',
+                A: 'ANAEROBIC',
+                H: 'HONEY'
+            }[processCode(bean)] || '';
+        }
+
         function roastColorClass(roast) {
             const level = roastLevelInfo(roast).value;
             return ['bg-amber-400', 'bg-amber-500', 'bg-amber-600', 'bg-amber-800', 'bg-stone-900'][level - 1];
@@ -1776,6 +1786,13 @@
             const roastBadge = document.getElementById('detail-roast-badge');
             roastBadge.textContent = bean.roast;
             roastBadge.className = "text-[10px] font-black px-2 py-0.5 rounded text-white " + roastColorClass(bean.roast);
+
+            const processBadge = document.getElementById('detail-process-badge');
+            const processBadgeTextValue = processBadgeText(bean);
+            processBadge.textContent = processBadgeTextValue;
+            processBadge.className = processBadgeTextValue
+                ? "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-coffee-50 text-coffee-600 border border-coffee-200"
+                : "hidden";
 
             const agingInfo = getAgingStatus(bean.roastDate);
             document.getElementById('detail-days-ago').textContent = agingInfo.days === null ? '(未焙煎)' : `(${agingInfo.days}日前焙煎)`;
