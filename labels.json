@@ -1,5 +1,66 @@
 [
   {
+    "labelId": "1780814661075-20260607",
+    "beanId": "1780814661075",
+    "sourceBeanName": "ポトシ農園 シドラ",
+    "beanName": "ポトシ農園 シドラ",
+    "countries": [
+      "COLOMBIA"
+    ],
+    "originText": "COLOMBIA",
+    "roast": "浅煎り",
+    "roastLevelValue": 1,
+    "process": "W",
+    "processLabel": "ウォッシュト",
+    "grind": "豆のまま",
+    "weight": "50g",
+    "roastDate": "2026-06-07",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.09.06",
+    "tasteProfile": {
+      "sour": 4,
+      "bitter": 3,
+      "sweet": 4,
+      "body": 2,
+      "aroma": 5
+    },
+    "notes": "シドラらしい華やかな香り。\n赤りんごを思わせるやさしい果実感と、\n青りんごの爽やかな酸味。\n後味にははちみつのような甘さが続き、\nシナモンを連想させるスパイス感がアクセント。\n冷めるにつれてフローラルな余韻が広がる。",
+    "status": "published",
+    "createdAt": "2026-06-07T16:06:07+09:00",
+    "updatedAt": "2026-06-07T16:06:07+09:00"
+  },
+  {
+    "labelId": "1780814107170-20260607",
+    "beanId": "1780814107170",
+    "sourceBeanName": "ふかいりブレンド",
+    "beanName": "ふかいりブレンド",
+    "countries": [
+      "BRAZIL",
+      "INDIA"
+    ],
+    "originText": "BRAZIL / INDIA",
+    "roast": "深煎り",
+    "roastLevelValue": 5,
+    "process": "",
+    "processLabel": "-",
+    "grind": "豆のまま",
+    "weight": "200g",
+    "roastDate": "2026-06-07",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.09.06",
+    "tasteProfile": {
+      "sour": 0.5,
+      "bitter": 4,
+      "sweet": 3,
+      "body": 5,
+      "aroma": 3
+    },
+    "notes": "ナッツ、ミルクチョコレート、キャラメルのようなマイルドな甘みと後から力強いコクが追いかけてくる感じ",
+    "status": "published",
+    "createdAt": "2026-06-07T15:36:14+09:00",
+    "updatedAt": "2026-06-07T15:36:14+09:00"
+  },
+  {
     "labelId": "1780728209035-20260606",
     "beanId": "1780728209035",
     "sourceBeanName": "ふかいりブレンド",
