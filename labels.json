@@ -1,5 +1,69 @@
 [
   {
+    "labelId": "1780728209035-20260606",
+    "beanId": "1780728209035",
+    "sourceBeanName": "ふかいりブレンド",
+    "beanName": "ふかいりブレンド",
+    "countries": [
+      "BRAZIL",
+      "INDIA"
+    ],
+    "originText": "BRAZIL / INDIA",
+    "roast": "深煎り",
+    "roastLevelValue": 5,
+    "process": "",
+    "processLabel": "-",
+    "grind": "豆のまま",
+    "weight": "200g",
+    "roastDate": "2026-06-06",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.09.05",
+    "tasteProfile": {
+      "sour": 1,
+      "bitter": 4,
+      "sweet": 4,
+      "body": 5,
+      "aroma": 4
+    },
+    "notes": "濃厚、甘い、力強い。\nチョコレートのような甘みと圧倒的なコク。",
+    "originNote": "ブラジルの甘さを主体に、インドロブスタのクリアな後味を加えました。酸味控えめ。",
+    "status": "published",
+    "createdAt": "2026-06-06T15:44:44+09:00",
+    "updatedAt": "2026-06-08T18:38:43+09:00"
+  },
+  {
+    "labelId": "1780814107170-20260607",
+    "beanId": "1780814107170-20260607",
+    "sourceBeanName": "ふかいりブレンド",
+    "beanName": "ふかいりブレンド",
+    "countries": [
+      "BRAZIL",
+      "INDIA"
+    ],
+    "originText": "BRAZIL / INDIA",
+    "roast": "深煎り",
+    "roastLevelValue": 5,
+    "process": "",
+    "processLabel": "-",
+    "grind": "豆のまま",
+    "weight": "200g",
+    "roastDate": "2026-06-07",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.09.06",
+    "tasteProfile": {
+      "sour": 1,
+      "bitter": 4,
+      "sweet": 4,
+      "body": 5,
+      "aroma": 4
+    },
+    "notes": "濃厚、甘い、力強い。\nチョコレートのような甘みと圧倒的なコク。",
+    "originNote": "ブラジルの甘さを主体に、インドロブスタのクリアな後味を加えました。酸味控えめ。",
+    "status": "published",
+    "createdAt": "2026-06-07T15:36:14+09:00",
+    "updatedAt": "2026-06-08T18:37:36+09:00"
+  },
+  {
     "labelId": "1780814661075-20260607",
     "beanId": "1780814661075-20260607",
     "sourceBeanName": "CGLE ポトシ農園 シドラ エクセルソ",
@@ -29,69 +93,5 @@
     "status": "published",
     "createdAt": "2026-06-07T16:06:07+09:00",
     "updatedAt": "2026-06-08T15:03:35+09:00"
-  },
-  {
-    "labelId": "1780814107170-20260607",
-    "beanId": "1780814107170",
-    "sourceBeanName": "ふかいりブレンド",
-    "beanName": "ふかいりブレンド",
-    "countries": [
-      "BRAZIL",
-      "INDIA"
-    ],
-    "originText": "BRAZIL / INDIA",
-    "roast": "深煎り",
-    "roastLevelValue": 5,
-    "process": "",
-    "processLabel": "-",
-    "grind": "豆のまま",
-    "weight": "200g",
-    "roastDate": "2026-06-07",
-    "agingStatus": "エイジング中 (ガス抜き)",
-    "bestBefore": "2026.09.06",
-    "tasteProfile": {
-      "sour": 0.5,
-      "bitter": 4,
-      "sweet": 3,
-      "body": 5,
-      "aroma": 3
-    },
-    "notes": "ナッツ、ミルクチョコレート、キャラメルのようなマイルドな甘みと後から力強いコクが追いかけてくる感じ",
-    "originNote": "",
-    "status": "published",
-    "createdAt": "2026-06-07T15:36:14+09:00",
-    "updatedAt": "2026-06-07T15:36:14+09:00"
-  },
-  {
-    "labelId": "1780728209035-20260606",
-    "beanId": "1780728209035",
-    "sourceBeanName": "ふかいりブレンド",
-    "beanName": "ふかいりブレンド",
-    "countries": [
-      "BRAZIL",
-      "INDIA"
-    ],
-    "originText": "BRAZIL / INDIA",
-    "roast": "深煎り",
-    "roastLevelValue": 5,
-    "process": "",
-    "processLabel": "-",
-    "grind": "豆のまま",
-    "weight": "200g",
-    "roastDate": "2026-06-06",
-    "agingStatus": "エイジング中 (ガス抜き)",
-    "bestBefore": "2026.09.05",
-    "tasteProfile": {
-      "sour": 0.5,
-      "bitter": 4,
-      "sweet": 3,
-      "body": 5,
-      "aroma": 3
-    },
-    "notes": "ナッツ、ミルクチョコレート、キャラメルのようなマイルドな甘みと後から力強いコクが追いかけてくる感じ",
-    "originNote": "",
-    "status": "published",
-    "createdAt": "2026-06-06T15:44:44+09:00",
-    "updatedAt": "2026-06-08T15:04:18+09:00"
   }
 ]
