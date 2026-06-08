@@ -19,15 +19,47 @@
     "bestBefore": "2026.09.06",
     "tasteProfile": {
       "sour": 4,
-      "bitter": 3,
+      "bitter": 1,
       "sweet": 4,
       "body": 2,
       "aroma": 5
     },
-    "notes": "シドラらしい華やかな香り。\n赤りんごを思わせるやさしい果実感と、\n青りんごの爽やかな酸味。\n後味にははちみつのような甘さが続き、\nシナモンを連想させるスパイス感がアクセント。\n冷めるにつれてフローラルな余韻が広がる。",
+    "notes": "まるで高原のアップルティーみたいな一杯。\nひと口目は華やかな花の香り、\nそのあとにりんごの甘酸っぱさ。\n冷めるほどに甘みが増して、\nずっと飲んでいたくなるコーヒーです",
+    "originNote": "コロンビアの名門CGLEが手掛けるシドラ種。りんごを思わせる果実感と華やかなフローラルな香りが特徴。",
     "status": "published",
     "createdAt": "2026-06-07T16:06:07+09:00",
-    "updatedAt": "2026-06-07T16:06:07+09:00"
+    "updatedAt": "2026-06-08T11:45:55+09:00"
+  },
+  {
+    "labelId": "template-eldiviso-ombligo-colombia-anaeronatural-20260523",
+    "beanId": "template-eldiviso-ombligo-colombia-anaeronatural",
+    "sourceBeanName": "ウィラ エルディビゾ オンブリゴン アナエロビックナチュラル",
+    "beanName": "ウィラ エルディビゾ オンブリゴン アナエロビックナチュラル",
+    "countries": [
+      "COLOMBIA"
+    ],
+    "originText": "COLOMBIA",
+    "roast": "浅煎り",
+    "roastLevelValue": 1,
+    "process": "A",
+    "processLabel": "アナエロビック",
+    "grind": "豆のまま",
+    "weight": "200g",
+    "roastDate": "2026-05-23",
+    "agingStatus": "お早めに (風味減少)",
+    "bestBefore": "2026.08.22",
+    "tasteProfile": {
+      "sour": 4,
+      "bitter": 1,
+      "sweet": 5,
+      "body": 4,
+      "aroma": 5
+    },
+    "notes": "葡萄やチェリーを思わせる濃密な果実感。ハイビスカスの華やかな香りとキャンディのような甘さが広がる、エルディビゾらしい個性派オンブリゴン。",
+    "originNote": "エルディビゾ農園が手掛ける希少品種オンブリゴン。アナエロビックナチュラル製法により、濃密な果実感と華やかな香りを引き出した個性派ロット。",
+    "status": "published",
+    "createdAt": "2026-06-08T11:41:04+09:00",
+    "updatedAt": "2026-06-08T11:41:04+09:00"
   },
   {
     "labelId": "1780814107170-20260607",
@@ -56,6 +88,7 @@
       "aroma": 3
     },
     "notes": "ナッツ、ミルクチョコレート、キャラメルのようなマイルドな甘みと後から力強いコクが追いかけてくる感じ",
+    "originNote": "",
     "status": "published",
     "createdAt": "2026-06-07T15:36:14+09:00",
     "updatedAt": "2026-06-07T15:36:14+09:00"
@@ -87,6 +120,7 @@
       "aroma": 3
     },
     "notes": "ナッツ、ミルクチョコレート、キャラメルのようなマイルドな甘みと後から力強いコクが追いかけてくる感じ",
+    "originNote": "",
     "status": "published",
     "createdAt": "2026-06-06T15:44:44+09:00",
     "updatedAt": "2026-06-06T15:44:44+09:00"
