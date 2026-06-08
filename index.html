@@ -2482,8 +2482,12 @@
                 showToast('書き出すラベルを選択してください');
                 return;
             }
+            if (!hasRoastDate(bean)) {
+                showToast('焙煎日が未入力のため書き出せません（テンプレート豆は除外されます）', 'error');
+                return;
+            }
             const label = createLabelSnapshot(bean);
-            publicLabels = upsertLabel(publicLabels, label);
+            publicLabels = upsertLabel(publicLabels, label).filter(entry => hasRoastDate(entry.roastDate));
             saveDraftLabels(publicLabels);
             downloadJsonFile('labels.json', publicLabels);
             showToast(`labels.json を書き出しました（${publicLabels.length}件）`);
