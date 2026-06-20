@@ -1,5 +1,37 @@
 [
   {
+    "labelId": "1781934331215-20260620",
+    "beanId": "1781934331215",
+    "sourceBeanName": "ふかいりブレンド",
+    "beanName": "ふかいりブレンド",
+    "countries": [
+      "BRAZIL",
+      "INDIA"
+    ],
+    "originText": "BRAZIL / INDIA",
+    "roast": "深煎り",
+    "roastLevelValue": 5,
+    "process": "",
+    "processLabel": "-",
+    "grind": "豆のまま",
+    "weight": "200g",
+    "roastDate": "2026-06-20",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.09.19",
+    "tasteProfile": {
+      "sour": 1,
+      "bitter": 4,
+      "sweet": 4,
+      "body": 5,
+      "aroma": 4
+    },
+    "notes": "ミルクチョコレート、ローストナッツ、キャラメル。濃厚な甘みと力強いコク。",
+    "originNote": "ブラジルの甘さと香ばしさ、インドロブスタの力強さ。酸味を抑えた濃厚な一杯。",
+    "status": "published",
+    "createdAt": "2026-06-20T14:51:46+09:00",
+    "updatedAt": "2026-06-20T14:51:46+09:00"
+  },
+  {
     "labelId": "1781332808174-20260613",
     "beanId": "1781332808174",
     "sourceBeanName": "ふかいりブレンド",
