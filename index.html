@@ -154,6 +154,11 @@
             </div>
             
             <div class="flex items-center space-x-2">
+                <!-- おすそ分け（豆登録なしでクイック印刷） -->
+                <button onclick="openQuickLabel()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 p-2 md:px-4 md:py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center shadow-sm">
+                    <i data-lucide="gift" class="w-4 h-4 md:mr-1.5"></i>
+                    <span class="hidden md:inline">おすそ分け</span>
+                </button>
                 <!-- Add Button (Icon on mobile, Text on Desktop) -->
                 <button id="header-add-button" onclick="openAddModal()" class="bg-coffee-700 hover:bg-coffee-800 text-white p-2 md:px-4 md:py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center shadow-sm">
                     <i data-lucide="plus" class="w-4 h-4 md:mr-1.5"></i>
@@ -334,6 +339,10 @@
                                 <button onclick="setTheme('modern')" id="btn-theme-modern" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">Modern</button>
                                 <button onclick="setTheme('package')" id="btn-theme-package" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">裏ラベル</button>
                             </div>
+                            <button onclick="openQuickLabel()" class="ml-auto flex items-center px-2.5 py-1.5 rounded-lg border font-bold transition-all border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100">
+                                <i data-lucide="gift" class="w-3.5 h-3.5 mr-1.5"></i>
+                                おすそ分け
+                            </button>
                         </div>
 
                         <div id="qr-settings" class="hidden bg-coffee-50 border border-coffee-200 rounded-xl p-3 space-y-2">
@@ -451,6 +460,58 @@
     </div>
 
     <!-- Add/Edit Modal (No Print) -->
+    <!-- Quick Label (おすそ分け) Modal -->
+    <div id="quick-label-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-coffee-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-amber-800 flex items-center">
+                    <i data-lucide="gift" class="w-4.5 h-4.5 mr-2 text-amber-600"></i>
+                    おすそ分けラベル（豆登録なし）
+                </h3>
+                <button onclick="closeQuickLabel()" class="p-1.5 text-coffee-400 hover:text-coffee-600 rounded-lg hover:bg-coffee-100 transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4">
+                <p class="text-[11px] text-coffee-500 font-bold leading-relaxed">市販豆などを登録せずに、マスコット＋豆名の表ラベルだけを印刷します。インベントリや labels.json には保存されません。</p>
+                <div>
+                    <label class="block text-[11px] font-black text-coffee-700 mb-1">豆名</label>
+                    <input id="quick-name" type="text" placeholder="例: 〇〇ブレンド" class="w-full text-sm bg-white border border-coffee-200 rounded-lg px-3 py-2 font-bold text-coffee-800 focus:outline-none focus:border-coffee-600">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-black text-coffee-700 mb-1">産地</label>
+                        <select id="quick-country" class="w-full text-sm bg-white border border-coffee-200 rounded-lg px-3 py-2 font-bold text-coffee-800 focus:outline-none focus:border-coffee-600">
+                            <option value="">指定なし</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-black text-coffee-700 mb-1">焙煎度</label>
+                        <select id="quick-roast" class="w-full text-sm bg-white border border-coffee-200 rounded-lg px-3 py-2 font-bold text-coffee-800 focus:outline-none focus:border-coffee-600">
+                            <option value="浅煎り">浅煎り</option>
+                            <option value="やや浅煎り">やや浅煎り</option>
+                            <option value="中煎り" selected>中煎り</option>
+                            <option value="やや深煎り">やや深煎り</option>
+                            <option value="深煎り">深煎り</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="text-[11px] font-bold text-coffee-400">テープ規格: 62mm × 29mm (小型キャニスター用)</p>
+                <div class="grid grid-cols-1 gap-3 pt-1">
+                    <button onclick="downloadQuickLabel()" class="flex items-center justify-center bg-coffee-100 hover:bg-coffee-200 text-coffee-800 font-bold py-2.5 px-4 rounded-xl text-xs transition-all border border-coffee-200">
+                        <i data-lucide="download" class="w-4 h-4 mr-1.5"></i>
+                        PNGダウンロード
+                    </button>
+                    <!-- 将来ダイレクト印刷を使う場合は hidden を外す -->
+                    <button onclick="printQuickLabel()" class="hidden flex items-center justify-center bg-coffee-800 hover:bg-coffee-900 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all">
+                        <i data-lucide="printer" class="w-4 h-4 mr-1.5"></i>
+                        ダイレクト印刷
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="bean-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden no-print">
         <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-coffee-200 overflow-hidden flex flex-col max-h-[90vh]">
             <!-- Modal Header -->
@@ -2680,6 +2741,99 @@
                     lucide.createIcons();
                 }, 800);
             }, 'image/png');
+        }
+
+        // --- おすそ分けラベル（豆登録なしで表ラベルだけ印刷） ---
+        let quickCountrySelectReady = false;
+
+        function buildQuickBean() {
+            const name = document.getElementById('quick-name').value.trim();
+            const country = document.getElementById('quick-country').value;
+            const roast = document.getElementById('quick-roast').value;
+            return {
+                id: 'quick',
+                name: name || '名称未設定',
+                roast,
+                countries: country ? [country] : []
+            };
+        }
+
+        async function renderQuickCanvas() {
+            // おすそ分けは 62mm × 29mm (小型キャニスター用) 固定
+            const width = 600, height = 281, labelHeightMm = 29;
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(62 / 25.4 * P_TOUCH_DPI);
+            canvas.height = Math.round(labelHeightMm / 25.4 * P_TOUCH_DPI);
+            const ctx = canvas.getContext('2d');
+            ctx.scale(canvas.width / width, canvas.height / height);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+            await drawFrontCanvasLabel(ctx, width, height, buildQuickBean());
+            return canvas;
+        }
+
+        function openQuickLabel() {
+            if (!quickCountrySelectReady) {
+                const select = document.getElementById('quick-country');
+                COUNTRY_OPTIONS.forEach(opt => {
+                    const o = document.createElement('option');
+                    o.value = opt.name;
+                    o.textContent = opt.name;
+                    select.appendChild(o);
+                });
+                quickCountrySelectReady = true;
+            }
+            document.getElementById('quick-label-modal').classList.remove('hidden');
+        }
+
+        function closeQuickLabel() {
+            document.getElementById('quick-label-modal').classList.add('hidden');
+        }
+
+        async function downloadQuickLabel() {
+            const btn = window.event?.currentTarget;
+            const original = btn?.innerHTML;
+            if (btn) { btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 mr-1.5 animate-spin"></i>作成中...`; lucide.createIcons(); }
+            try {
+                const canvas = await renderQuickCanvas();
+                binarizeCanvas(canvas);
+                canvas.toBlob((blob) => {
+                    const link = document.createElement('a');
+                    const bean = buildQuickBean();
+                    const safeName = bean.name.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_');
+                    const objectUrl = URL.createObjectURL(blob);
+                    link.download = `Fro_${safeName}.png`;
+                    link.href = objectUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(objectUrl);
+                    if (btn) { btn.innerHTML = original; lucide.createIcons(); }
+                }, 'image/png');
+            } catch (error) {
+                console.error(error);
+                showToast('ラベルの作成に失敗しました');
+                if (btn) { btn.innerHTML = original; lucide.createIcons(); }
+            }
+        }
+
+        async function printQuickLabel() {
+            try {
+                const canvas = await renderQuickCanvas();
+                binarizeCanvas(canvas);
+                const dataUrl = canvas.toDataURL('image/png');
+                const pageHeight = '29mm';
+                const win = window.open('', '_blank');
+                win.document.write(`<!DOCTYPE html><html><head><title>おすそ分けラベル</title>
+                    <style>@page{size:62mm ${pageHeight};margin:0;}
+                    html,body{margin:0;padding:0;}
+                    img{width:62mm;height:${pageHeight};display:block;}</style></head>
+                    <body><img src="${dataUrl}" onload="window.focus();window.print();"></body></html>`);
+                win.document.close();
+            } catch (error) {
+                console.error(error);
+                showToast('印刷の準備に失敗しました');
+            }
         }
 
         function fitCenteredCanvasText(ctx, text, centerX, y, maxWidth, startSize, minSize) {
