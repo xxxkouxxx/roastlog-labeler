@@ -1,5 +1,67 @@
 [
   {
+    "labelId": "1782534594732-20260627",
+    "beanId": "1782534594732",
+    "sourceBeanName": "ウィラ エルディビゾ オンブリゴン",
+    "beanName": "ウィラ エルディビゾ オンブリゴン",
+    "countries": [
+      "COLOMBIA"
+    ],
+    "originText": "COLOMBIA",
+    "roast": "浅煎り",
+    "roastLevelValue": 1,
+    "process": "A",
+    "processLabel": "アナエロビック",
+    "grind": "豆のまま",
+    "weight": "100g",
+    "roastDate": "2026-06-27",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.09.26",
+    "tasteProfile": {
+      "sour": 4,
+      "bitter": 1,
+      "sweet": 5,
+      "body": 4,
+      "aroma": 5
+    },
+    "notes": "葡萄やチェリーを思わせる濃密な果実感。ハイビスカスの華やかな香りとキャンディのような甘さが広がる、エルディビゾらしい個性派オンブリゴン。",
+    "originNote": "エルディビゾ農園が手掛ける希少品種オンブリゴン。アナエロビックナチュラル製法により、濃密な果実感と華やかな香りを引き出した個性派ロット。",
+    "status": "published",
+    "createdAt": "2026-06-27T13:46:10+09:00",
+    "updatedAt": "2026-06-27T13:46:10+09:00"
+  },
+  {
+    "labelId": "1782534696604-20260627",
+    "beanId": "1782534696604",
+    "sourceBeanName": "イルガチェフェ G1 アリチャ ウォッシュト",
+    "beanName": "イルガチェフェ G1 アリチャ ウォッシュト",
+    "countries": [
+      "ETHIOPIA"
+    ],
+    "originText": "ETHIOPIA",
+    "roast": "浅煎り",
+    "roastLevelValue": 1,
+    "process": "W",
+    "processLabel": "ウォッシュト",
+    "grind": "豆のまま",
+    "weight": "150g",
+    "roastDate": "2026-06-27",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.09.26",
+    "tasteProfile": {
+      "sour": 4,
+      "bitter": 1,
+      "sweet": 4,
+      "body": 2,
+      "aroma": 4
+    },
+    "notes": "ジャスミンやベルガモットを思わせる華やかな香り。レモンや白桃の明るい酸、はちみつのような甘さと、紅茶を思わせる透明感のある余韻。",
+    "originNote": "標高2,000–2,200mで育ったデガ種のウォッシュト。冷涼な高地を思わせる白い花、柑橘、澄んだ紅茶のような繊細さを、浅煎りで引き出すことを狙いました。",
+    "status": "published",
+    "createdAt": "2026-06-27T13:45:01+09:00",
+    "updatedAt": "2026-06-27T13:45:01+09:00"
+  },
+  {
     "labelId": "1781934331215-20260620",
     "beanId": "1781934331215",
     "sourceBeanName": "ふかいりブレンド",
