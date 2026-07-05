@@ -332,12 +332,13 @@
                         </div>
 
                         <!-- Label Theme Selector -->
-                        <div class="flex items-center space-x-3 text-xs">
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
                             <span class="font-bold text-coffee-500">デザインテーマ:</span>
-                            <div class="flex space-x-1.5">
+                            <div class="flex flex-wrap gap-1.5">
                                 <button onclick="setTheme('front')" id="btn-theme-front" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-700 bg-coffee-700 text-white shadow-sm">表ラベル</button>
                                 <button onclick="setTheme('modern')" id="btn-theme-modern" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">Modern</button>
                                 <button onclick="setTheme('package')" id="btn-theme-package" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">裏ラベル</button>
+                                <button onclick="setTheme('simple-package')" id="btn-theme-simple-package" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">シンプル裏</button>
                             </div>
                             <button onclick="openQuickLabel()" class="ml-auto flex items-center px-2.5 py-1.5 rounded-lg border font-bold transition-all border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100">
                                 <i data-lucide="gift" class="w-3.5 h-3.5 mr-1.5"></i>
@@ -2057,6 +2058,10 @@
                 renderPackagePreview(bean);
                 return;
             }
+            if (activeTheme === 'simple-package') {
+                renderSimplePackagePreview(bean);
+                return;
+            }
 
             restoreStandardLabelPreview();
             document.getElementById('lbl-origin').textContent = modernOriginText(bean);
@@ -2196,6 +2201,32 @@
             qrInstance = null;
         }
 
+        function renderSimplePackagePreview(bean) {
+            const container = document.getElementById('printable-label-area');
+            const frame = document.getElementById('label-design-frame');
+            container.style.width = '300px';
+            container.style.height = '300px';
+            setPrintDimensions(container, '62x62');
+            frame.className = 'w-full h-full bg-white text-black select-none font-sans flex items-center';
+            frame.style.borderWidth = '1px';
+            frame.style.borderStyle = 'solid';
+            frame.style.borderColor = '#000';
+            frame.innerHTML = `
+                <div class="w-full px-5 py-4">
+                    <div class="grid grid-cols-[68px_1fr] gap-x-2 gap-y-2 text-[13px] leading-tight">
+                        <div class="font-bold">名称：</div><div class="font-bold">${escapeHtml(textOrDash(bean.name))}</div>
+                        <div class="font-bold">原材料名：</div><div>コーヒー豆</div>
+                        <div class="font-bold">原産国名：</div><div>${escapeHtml(modernOriginText(bean))}</div>
+                        <div class="font-bold">内容量：</div><div>${escapeHtml(labelWeightText(bean))}</div>
+                        <div class="font-bold">焙煎日：</div><div class="font-mono">${escapeHtml(roastDateText(bean))}</div>
+                        <div class="font-bold">賞味期限：</div><div class="font-mono">${escapeHtml(bestBeforeText(bean))}</div>
+                        <div class="font-bold">保存方法：</div><div>高温多湿を避けて保存</div>
+                    </div>
+                </div>
+            `;
+            qrInstance = null;
+        }
+
         function changeLabelStyle() {
             if (activeTheme === 'front') {
                 const bean = beans.find(b => b.id === selectedBeanId);
@@ -2207,6 +2238,11 @@
                 if (bean) {
                     renderPackagePreview(bean);
                 }
+                return;
+            }
+            if (activeTheme === 'simple-package') {
+                const bean = beans.find(b => b.id === selectedBeanId);
+                if (bean) renderSimplePackagePreview(bean);
                 return;
             }
 
@@ -2240,7 +2276,10 @@
 
         function setTheme(theme) {
             activeTheme = theme;
-            ['front', 'modern', 'package'].forEach(t => {
+            if (theme === 'simple-package') {
+                document.getElementById('label-size-select').value = '62x62';
+            }
+            ['front', 'modern', 'package', 'simple-package'].forEach(t => {
                 const btn = document.getElementById(`btn-theme-${t}`);
                 if (t === theme) {
                     btn.className = "px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-700 bg-coffee-700 text-white shadow-sm";
@@ -2711,7 +2750,8 @@
             return {
                 front: 'Fro',
                 modern: 'Mod',
-                package: 'Pac'
+                package: 'Pac',
+                'simple-package': 'Smp'
             }[activeTheme] || 'Lbl';
         }
 
@@ -3027,6 +3067,41 @@
             drawWrappedCanvasText(ctx, packageMemo(bean), 114, y, width - 172, 30, 3);
         }
 
+        function drawSimplePackageCanvasLabel(ctx, width, height, bean) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(10, 10, width - 20, height - 20);
+
+            const labelX = 42;
+            const valueX = 190;
+            const maxValueWidth = width - valueX - 40;
+            const rows = [
+                ['名称：', textOrDash(bean.name), 74],
+                ['原材料名：', 'コーヒー豆', 62],
+                ['原産国名：', modernOriginText(bean), 62],
+                ['内容量：', labelWeightText(bean), 62],
+                ['焙煎日：', roastDateText(bean), 62],
+                ['賞味期限：', bestBeforeText(bean), 62],
+                ['保存方法：', '高温多湿を避けて保存', 62]
+            ];
+
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            let y = 55;
+            rows.forEach(([label, value, rowHeight], index) => {
+                ctx.font = '700 25px "Noto Sans JP", sans-serif';
+                ctx.fillText(label, labelX, y);
+                ctx.font = index === 0
+                    ? '700 25px "Noto Sans JP", sans-serif'
+                    : '400 25px "Noto Sans JP", sans-serif';
+                drawWrappedCanvasText(ctx, value, valueX, y, maxValueWidth, 30, index === 0 ? 2 : 1);
+                y += rowHeight;
+            });
+        }
+
         // Render Canvas for high quality printing (Custom graphics pipeline)
         function warnIfRoastDateMissing(bean) {
             if (!hasRoastDate(bean)) {
@@ -3076,6 +3151,11 @@
                 height = 740;
                 labelHeightMm = 90;
             }
+            if (activeTheme === 'simple-package') {
+                width = 600;
+                height = 600;
+                labelHeightMm = 62;
+            }
 
             canvas.width = Math.round(62 / 25.4 * P_TOUCH_DPI);
             canvas.height = Math.round(labelHeightMm / 25.4 * P_TOUCH_DPI);
@@ -3100,6 +3180,12 @@
 
             if (activeTheme === 'package') {
                 drawPackageCanvasLabel(ctx, width, height, bean);
+                finishCanvasDownload(canvas, bean, originalBtn, originalHTML);
+                return;
+            }
+
+            if (activeTheme === 'simple-package') {
+                drawSimplePackageCanvasLabel(ctx, width, height, bean);
                 finishCanvasDownload(canvas, bean, originalBtn, originalHTML);
                 return;
             }
