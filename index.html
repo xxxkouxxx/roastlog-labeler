@@ -2213,6 +2213,7 @@
             frame.style.borderColor = '#000';
             frame.innerHTML = `
                 <div class="w-full px-5 py-4">
+                    <div class="mb-2">${packageMarkSvg('trio', 'light')}</div>
                     <div class="grid grid-cols-[68px_1fr] gap-x-2 gap-y-2 text-[13px] leading-tight">
                         <div class="font-bold">名称：</div><div class="font-bold">${escapeHtml(textOrDash(bean.name))}</div>
                         <div class="font-bold">原材料名：</div><div>コーヒー豆</div>
@@ -3073,6 +3074,7 @@
             ctx.strokeStyle = '#000000';
             ctx.lineWidth = 2;
             ctx.strokeRect(10, 10, width - 20, height - 20);
+            drawPackageBeanMark(ctx, 'trio', width / 2, 18, 'light');
 
             const labelX = 42;
             const valueX = 190;
@@ -3090,7 +3092,7 @@
             ctx.fillStyle = '#000000';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
-            let y = 55;
+            let y = 112;
             rows.forEach(([label, value, rowHeight], index) => {
                 ctx.font = '700 25px "Noto Sans JP", sans-serif';
                 ctx.fillText(label, labelX, y);
