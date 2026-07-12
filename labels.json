@@ -1,5 +1,37 @@
 [
   {
+    "labelId": "1783838106071-20260712",
+    "beanId": "1783838106071",
+    "sourceBeanName": "ふかいりブレンド",
+    "beanName": "ふかいりブレンド",
+    "countries": [
+      "BRAZIL",
+      "INDIA"
+    ],
+    "originText": "BRAZIL / INDIA",
+    "roast": "深煎り",
+    "roastLevelValue": 5,
+    "process": "",
+    "processLabel": "-",
+    "grind": "豆のまま",
+    "weight": "200g",
+    "roastDate": "2026-07-12",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.10.11",
+    "tasteProfile": {
+      "sour": 0.5,
+      "bitter": 5,
+      "sweet": 3.5,
+      "body": 3.5,
+      "aroma": 3
+    },
+    "notes": "ミルクチョコレート、ローストナッツ、キャラメル。濃厚な甘みと力強いコク。",
+    "originNote": "ブラジルの甘さと香ばしさ、インドロブスタの力強さ。酸味を抑えた濃厚な一杯。",
+    "status": "published",
+    "createdAt": "2026-07-12T15:49:14+09:00",
+    "updatedAt": "2026-07-12T15:49:14+09:00"
+  },
+  {
     "labelId": "1783838334680-20260712",
     "beanId": "1783838334680",
     "sourceBeanName": "エルディビゾ オンブリゴン",
