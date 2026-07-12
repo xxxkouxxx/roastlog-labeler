@@ -1,5 +1,36 @@
 [
   {
+    "labelId": "1783838334680-20260712",
+    "beanId": "1783838334680",
+    "sourceBeanName": "エルディビゾ オンブリゴン",
+    "beanName": "エルディビゾ オンブリゴン",
+    "countries": [
+      "COLOMBIA"
+    ],
+    "originText": "COLOMBIA",
+    "roast": "浅煎り",
+    "roastLevelValue": 1,
+    "process": "A",
+    "processLabel": "アナエロビック",
+    "grind": "豆のまま",
+    "weight": "100g",
+    "roastDate": "2026-07-12",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.10.11",
+    "tasteProfile": {
+      "sour": 4,
+      "bitter": 1,
+      "sweet": 4,
+      "body": 4,
+      "aroma": 5
+    },
+    "notes": "葡萄やチェリーを思わせる濃密な果実感。ハイビスカスの華やかな香りとキャンディのような甘さが広がる、エルディビゾらしい個性派オンブリゴン。",
+    "originNote": "エルディビゾ農園が手掛ける希少品種オンブリゴン。アナエロビックナチュラル製法により、濃密な果実感と華やかな香りを引き出した個性派ロット。",
+    "status": "published",
+    "createdAt": "2026-07-12T15:39:55+09:00",
+    "updatedAt": "2026-07-12T15:39:55+09:00"
+  },
+  {
     "labelId": "1782534594732-20260627",
     "beanId": "1782534594732",
     "sourceBeanName": "ウィラ エルディビゾ オンブリゴン",
