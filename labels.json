@@ -1,5 +1,36 @@
 [
   {
+    "labelId": "1784965388829-20260725",
+    "beanId": "1784965388829",
+    "sourceBeanName": "エルディビゾ オンブリゴン",
+    "beanName": "エルディビゾ オンブリゴン",
+    "countries": [
+      "COLOMBIA"
+    ],
+    "originText": "COLOMBIA",
+    "roast": "浅煎り",
+    "roastLevelValue": 1,
+    "process": "A",
+    "processLabel": "アナエロビック",
+    "grind": "豆のまま",
+    "weight": "100g",
+    "roastDate": "2026-07-25",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.10.24",
+    "tasteProfile": {
+      "sour": 4,
+      "bitter": 0.5,
+      "sweet": 4,
+      "body": 4,
+      "aroma": 5
+    },
+    "notes": "葡萄やチェリーを思わせる濃密な果実感。ハイビスカスの華やかな香りとキャンディのような甘さが広がる、エルディビゾらしい個性派オンブリゴン。",
+    "originNote": "エルディビゾ農園が手掛ける希少品種オンブリゴン。アナエロビックナチュラル製法により、濃密な果実感と華やかな香りを引き出した個性派ロット。",
+    "status": "published",
+    "createdAt": "2026-07-25T16:43:16+09:00",
+    "updatedAt": "2026-07-25T16:43:16+09:00"
+  },
+  {
     "labelId": "1783838106071-20260712",
     "beanId": "1783838106071",
     "sourceBeanName": "ふかいりブレンド",
@@ -16,7 +47,7 @@
     "grind": "豆のまま",
     "weight": "200g",
     "roastDate": "2026-07-12",
-    "agingStatus": "エイジング中 (ガス抜き)",
+    "agingStatus": "飲み頃ピーク！",
     "bestBefore": "2026.10.11",
     "tasteProfile": {
       "sour": 0.5,
@@ -29,7 +60,7 @@
     "originNote": "ブラジルの甘さと香ばしさ、インドロブスタの力強さ。酸味を抑えた濃厚な一杯。",
     "status": "published",
     "createdAt": "2026-07-12T15:49:14+09:00",
-    "updatedAt": "2026-07-12T15:49:14+09:00"
+    "updatedAt": "2026-07-25T16:41:31+09:00"
   },
   {
     "labelId": "1783838334680-20260712",
