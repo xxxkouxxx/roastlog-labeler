@@ -1,5 +1,67 @@
 [
   {
+    "labelId": "1785671619793-20260802",
+    "beanId": "1785671619793",
+    "sourceBeanName": "エルディビゾ ブルボン・アヒ",
+    "beanName": "エルディビゾ ブルボン・アヒ",
+    "countries": [
+      "COLOMBIA"
+    ],
+    "originText": "COLOMBIA",
+    "roast": "浅煎り",
+    "roastLevelValue": 1,
+    "process": "A",
+    "processLabel": "アナエロビック",
+    "grind": "豆のまま",
+    "weight": "250g",
+    "roastDate": "2026-08-02",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.11.01",
+    "tasteProfile": {
+      "sour": 4,
+      "bitter": 1,
+      "sweet": 4,
+      "body": 4,
+      "aroma": 5
+    },
+    "notes": "白い花、ジャスミン、レモングラスを思わせる華やかな香り。クランベリーやラズベリーの甘酸っぱさに、柑橘系の明るい酸味と、後半にほのかなスパイス感。発酵由来のトロピカルな甘さと、なめらかな質感",
+    "originNote": "アンデス山脈南部の緑豊かな高地。火山性土壌と昼夜の温度差に恵まれ、コーヒーチェリーがゆっくり成熟する地域です。山あいの涼しい空気と豊かな自然が、華やかで透明感のある風味を育みます。",
+    "status": "published",
+    "createdAt": "2026-08-02T21:07:01+09:00",
+    "updatedAt": "2026-08-02T21:07:01+09:00"
+  },
+  {
+    "labelId": "1785671329656-20260802",
+    "beanId": "1785671329656",
+    "sourceBeanName": "エルディビゾ オンブリゴン",
+    "beanName": "エルディビゾ オンブリゴン",
+    "countries": [
+      "COLOMBIA"
+    ],
+    "originText": "COLOMBIA",
+    "roast": "浅煎り",
+    "roastLevelValue": 1,
+    "process": "A",
+    "processLabel": "アナエロビック",
+    "grind": "豆のまま",
+    "weight": "100g",
+    "roastDate": "2026-08-02",
+    "agingStatus": "エイジング中 (ガス抜き)",
+    "bestBefore": "2026.11.01",
+    "tasteProfile": {
+      "sour": 4,
+      "bitter": 0.5,
+      "sweet": 4,
+      "body": 4,
+      "aroma": 4
+    },
+    "notes": "葡萄やチェリーを思わせる濃密な果実感。ハイビスカスの華やかな香りとキャンディのような甘さが広がる、エルディビゾらしい個性派オンブリゴン。",
+    "originNote": "エルディビゾ農園が手掛ける希少品種オンブリゴン。アナエロビックナチュラル製法により、濃密な果実感と華やかな香りを引き出した個性派ロット。",
+    "status": "published",
+    "createdAt": "2026-08-02T21:03:46+09:00",
+    "updatedAt": "2026-08-02T21:03:46+09:00"
+  },
+  {
     "labelId": "1784965388829-20260725",
     "beanId": "1784965388829",
     "sourceBeanName": "エルディビゾ オンブリゴン",
