@@ -1,0 +1,7 @@
+interface:
+  display_name: "RoastLog ラベル改善"
+  short_description: "ラベル管理と印刷UI、3Dプレビュー、QRと公開用JSONを検証・改善する"
+  brand_color: "#6F4427"
+  default_prompt: "$roastlog-labeler-maintenance を使って、このプロジェクトのUIとラベル出力を確認し、依頼された範囲を改善してください。"
+policy:
+  allow_implicit_invocation: true
