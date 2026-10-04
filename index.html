@@ -57,7 +57,28 @@
             background: #dac0aa;
             border-radius: 3px;
         }
+        :root { color-scheme: light; }
+        html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+        button, input, select, textarea, summary { touch-action: manipulation; }
+        button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #a3714c; outline-offset: 3px; }
+        button:disabled { opacity: .5; cursor: not-allowed; }
+        .workspace-intro { background: linear-gradient(120deg, #f6f1eb, #fff 75%); border: 1px solid #ecdcd0; }
+        #inventory-panel, #detail-panel, #label-builder { min-width: 0; }
+        #label-preview-stage { min-height: 220px; }
+        .bean-item { width: 100%; text-align: left; }
+        #mobile-nav { padding-bottom: max(.5rem, env(safe-area-inset-bottom)); }
+        @media (max-width: 420px) {
+            #label-preview-stage { padding: 16px 4px; }
+            #printable-label-area { zoom: .8; }
+            header h1 { font-size: 15px !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
         @media print {
+            @page { margin: 0; }
+            html, body { margin: 0 !important; padding: 0 !important; background: white; }
             body * {
                 visibility: hidden;
             }
@@ -68,8 +89,11 @@
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: var(--print-width, 62mm) !important;
-                height: var(--print-height, 62mm) !important;
+                width: 300px !important;
+                height: var(--print-preview-height, 300px) !important;
+                transform: scale(var(--print-scale-x, .781102), var(--print-scale-y, .781102));
+                transform-origin: top left;
+                zoom: 1 !important;
                 margin: 0;
                 padding: 0;
                 box-shadow: none !important;
@@ -80,6 +104,12 @@
             .no-print {
                 display: none !important;
             }
+            main, main > .grid, #detail-panel, #detail-workspace, #label-builder, #label-preview-stage {
+                position: static !important; display: block !important;
+                margin: 0 !important; padding: 0 !important; border: 0 !important; box-shadow: none !important;
+            }
+            #inventory-panel, #detail-card, #detail-placeholder, #label-builder > :not(#label-preview-stage) { display: none !important; }
+            #label-preview-stage { overflow: visible !important; min-height: 0; }
         }
 
         body.qr-view {
@@ -89,8 +119,10 @@
         body.qr-view #inventory-panel,
         body.qr-view #label-builder,
         body.qr-view #mobile-nav,
+        body.qr-view .workspace-intro,
         body.qr-view .editor-actions,
-        body.qr-view #header-add-button {
+        body.qr-view #header-add-button,
+        body.qr-view #header-quick-button {
             display: none !important;
         }
 
@@ -135,6 +167,13 @@
             }
         }
     </style>
+    <style id="print-page-style" media="print"></style>
+    <script type="importmap">
+        { "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+        } }
+    </script>
 </head>
 <body class="text-coffee-900 min-h-screen flex flex-col pb-16 md:pb-0">
 
@@ -149,13 +188,13 @@
                     <h1 class="text-lg font-bold tracking-tight font-serif-title text-coffee-800 flex items-center">
                         RoastLog <span class="text-coffee-500 mx-1">&</span> Labeler <span class="ml-1.5 text-[10px] bg-coffee-100 text-coffee-700 px-1.5 py-0.5 rounded-full uppercase tracking-wider font-sans font-black">Pro</span>
                     </h1>
-                    <p class="text-[10px] text-coffee-500 font-medium">Cloud Web & Brother Printer Sync</p>
+                    <p class="text-[10px] text-coffee-500 font-medium">焙煎の記録から、豆のラベルへ。</p>
                 </div>
             </div>
             
             <div class="flex items-center space-x-2">
                 <!-- おすそ分け（豆登録なしでクイック印刷） -->
-                <button onclick="openQuickLabel()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 p-2 md:px-4 md:py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center shadow-sm">
+                <button id="header-quick-button" aria-label="おすそ分けラベルを作成" onclick="openQuickLabel()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 p-2 md:px-4 md:py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center shadow-sm">
                     <i data-lucide="gift" class="w-4 h-4 md:mr-1.5"></i>
                     <span class="hidden md:inline">おすそ分け</span>
                 </button>
@@ -175,16 +214,31 @@
     </div>
 
     <!-- Main Workspace -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 no-print">
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <section class="workspace-intro rounded-2xl p-5 md:p-6 mb-6 no-print" aria-labelledby="workspace-title">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <p class="text-[10px] font-bold tracking-[.18em] text-coffee-600 mb-1">ROASTLOG / LABEL WORKSPACE</p>
+                    <h2 id="workspace-title" class="text-xl md:text-2xl font-bold text-coffee-900">今日の豆に、ラベルを。</h2>
+                    <p class="text-xs text-coffee-600 mt-2 leading-relaxed">豆を選ぶ → デザインとサイズを確認 → PNG保存・印刷</p>
+                </div>
+                <span class="self-start text-[11px] text-coffee-700 bg-white border border-coffee-200 px-3 py-2 rounded-full">このブラウザに保存</span>
+            </div>
+            <nav aria-label="ラベル作成の手順" class="flex flex-wrap gap-2 mt-4 text-xs font-bold">
+                <button onclick="focusWorkspaceSection('inventory-panel')" class="bg-white border border-coffee-200 rounded-lg px-3 py-2 text-coffee-700">1　豆を選ぶ</button>
+                <button id="workspace-print-link" onclick="focusWorkspaceSection('label-builder')" class="bg-coffee-800 text-white rounded-lg px-3 py-2">2　ラベルを作る</button>
+                <span class="px-3 py-2 font-normal text-coffee-600">QRの公開は、印刷とは別の操作です。</span>
+            </nav>
+        </section>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             <!-- Left Side: Coffee Inventory -->
-            <div id="inventory-panel" class="lg:col-span-5 flex flex-col space-y-6">
+            <div id="inventory-panel" tabindex="-1" class="lg:col-span-4 flex flex-col space-y-6">
                 <div class="bg-white p-5 rounded-2xl border border-coffee-200 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="font-bold text-coffee-800 flex items-center text-base">
                             <i data-lucide="boxes" class="w-5 h-5 mr-2 text-coffee-600"></i>
-                            保存中の豆インベントリ
+                            保存した豆
                         </h2>
                         <span id="bean-count" class="text-[11px] font-black bg-coffee-100 text-coffee-700 px-2.5 py-1 rounded-full">0 CANISTERS</span>
                     </div>
@@ -192,8 +246,14 @@
                     <!-- Search and Filter -->
                     <div class="relative mb-4">
                         <i data-lucide="search" class="absolute left-3 top-2.5 text-coffee-400 w-4.5 h-4.5"></i>
-                        <input type="text" id="search-input" oninput="filterBeans()" placeholder="名前・産地・焙煎度で検索..." class="w-full pl-9.5 pr-4 py-2 border border-coffee-200 rounded-xl bg-coffee-50/50 text-xs focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-all">
+                        <input type="search" id="search-input" aria-label="豆の名前・産地・焙煎度で検索" oninput="filterBeans()" placeholder="名前・産地・焙煎度で検索..." class="w-full pl-10 pr-4 py-2.5 border border-coffee-200 rounded-xl bg-coffee-50/50 text-xs focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-all">
                     </div>
+                    <div class="flex gap-1.5 mb-3 text-xs" role="group" aria-label="豆の絞り込み">
+                        <button id="filter-all" aria-pressed="true" onclick="setBeanFilter('all')" class="px-3 py-2 rounded-lg bg-coffee-700 text-white font-bold">すべて</button>
+                        <button id="filter-roasted" aria-pressed="false" onclick="setBeanFilter('roasted')" class="px-3 py-2 rounded-lg bg-coffee-50 text-coffee-700 font-bold">焙煎済み</button>
+                        <button id="filter-template" aria-pressed="false" onclick="setBeanFilter('template')" class="px-3 py-2 rounded-lg bg-coffee-50 text-coffee-700 font-bold">テンプレート</button>
+                    </div>
+                    <p id="bean-filter-count" class="text-[11px] text-coffee-600 mb-3" role="status"></p>
 
                     <!-- Beans List Container -->
                     <div id="beans-list" class="space-y-3 max-h-[480px] overflow-y-auto pr-1">
@@ -202,13 +262,13 @@
                 </div>
 
                 <!-- Backup & Sync (Useful for multiple devices) -->
-                <div class="bg-coffee-100/50 p-4 rounded-xl border border-coffee-200 text-xs text-coffee-700 space-y-3">
-                    <div class="flex items-center space-x-1.5 font-bold text-coffee-800">
-                        <i data-lucide="refresh-cw" class="w-4 h-4 text-coffee-600"></i>
-                        <span>デバイス間のデータ同期について</span>
-                    </div>
+                <details class="bg-coffee-100/50 p-4 rounded-xl border border-coffee-200 text-xs text-coffee-700 space-y-3">
+                    <summary class="cursor-pointer font-bold text-coffee-800">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-coffee-600 inline-block align-middle mr-1"></i>
+                        <span>バックアップ・テンプレート</span>
+                    </summary>
                     <p class="text-[11px] leading-relaxed text-coffee-600">
-                        データはブラウザに自動保存されます。他スマホへ移行したい場合は、インベントリデータをまるごと書き出して移行できます。
+                        豆のデータはこのブラウザに保存されます。別の端末へ移すときは、書き出したJSONを読み込んでください。
                     </p>
                     <div class="flex space-x-2">
                         <button onclick="exportData()" class="flex-1 bg-white hover:bg-coffee-50 border border-coffee-300 py-1.5 rounded-lg font-bold text-center">データ書き出し</button>
@@ -217,16 +277,17 @@
                     <button onclick="addGeneratedBeanTemplates()" class="w-full bg-coffee-700 hover:bg-coffee-800 text-white py-2 rounded-lg font-bold text-center">
                         生豆テンプレート25件を追加
                     </button>
-                </div>
+                </details>
 
                 <div class="bg-white p-4 rounded-xl border border-coffee-200 shadow-sm text-xs text-coffee-700 space-y-3">
                     <div class="flex items-center justify-between gap-3">
                         <div class="flex items-center space-x-1.5 font-bold text-coffee-800">
                             <i data-lucide="globe-2" class="w-4 h-4 text-coffee-600"></i>
-                            <span>公開中ラベル</span>
+                            <span>公開用ファイルのラベル</span>
                         </div>
                         <span id="public-label-count" class="text-[10px] font-black bg-coffee-100 text-coffee-700 px-2 py-1 rounded-full">0 PUBLIC</span>
                     </div>
+                    <p class="text-[11px] leading-relaxed text-coffee-500">この画面が読み込んだ labels.json の内容です。公開サイトへの反映は別途確認してください。</p>
                     <div id="public-labels-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
                         <p class="text-[11px] leading-relaxed text-coffee-500">公開中のラベルはまだ読み込まれていません。</p>
                     </div>
@@ -234,7 +295,7 @@
             </div>
 
             <!-- Right Side: Details & Label Engine -->
-            <div id="detail-panel" class="lg:col-span-7 flex flex-col space-y-6">
+            <div id="detail-panel" class="lg:col-span-8 flex flex-col space-y-6">
                 
                 <!-- Main Workspace (Hidden if no bean is selected) -->
                 <div id="detail-workspace" class="hidden flex flex-col space-y-6">
@@ -314,15 +375,15 @@
                     </div>
 
                     <!-- Label Builder Area -->
-                    <div id="label-builder" class="bg-white p-5 md:p-6 rounded-2xl border border-coffee-200 shadow-sm flex flex-col space-y-5">
+                    <div id="label-builder" tabindex="-1" class="bg-white p-5 md:p-6 rounded-2xl border border-coffee-200 shadow-sm flex flex-col space-y-5">
                         <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-coffee-100 pb-3 gap-2">
                             <h3 class="font-bold text-coffee-800 text-base flex items-center">
                                 <i data-lucide="printer" class="w-5 h-5 mr-2 text-coffee-600"></i>
-                                スマートラベル印刷
+                                ラベルを作る
                             </h3>
                             <!-- Label Size Selector -->
                             <div class="flex items-center space-x-2">
-                                <label class="text-[11px] text-coffee-500 font-bold whitespace-nowrap">テープ規格:</label>
+                                <label for="label-size-select" class="text-[11px] text-coffee-500 font-bold whitespace-nowrap">サイズ</label>
                                 <select id="label-size-select" onchange="changeLabelStyle()" class="text-xs bg-coffee-50 border border-coffee-200 rounded-lg p-1.5 font-bold text-coffee-700 focus:outline-none">
                                     <option value="62x62" selected>62mm × 62mm (キャニスター正面用)</option>
                                     <option value="62x29">62mm × 29mm (小型キャニスター用)</option>
@@ -336,7 +397,7 @@
                             <span class="font-bold text-coffee-500">デザインテーマ:</span>
                             <div class="flex flex-wrap gap-1.5">
                                 <button onclick="setTheme('front')" id="btn-theme-front" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-700 bg-coffee-700 text-white shadow-sm">表ラベル</button>
-                                <button onclick="setTheme('modern')" id="btn-theme-modern" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">Modern</button>
+                                <button onclick="setTheme('modern')" id="btn-theme-modern" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">QR付き</button>
                                 <button onclick="setTheme('package')" id="btn-theme-package" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">裏ラベル</button>
                                 <button onclick="setTheme('simple-package')" id="btn-theme-simple-package" class="px-2.5 py-1.5 rounded-lg border font-bold transition-all border-coffee-200 text-coffee-600 hover:bg-coffee-50">シンプル裏</button>
                             </div>
@@ -346,17 +407,26 @@
                             </button>
                         </div>
 
+                        <p id="label-format-note" class="text-xs text-coffee-600 leading-relaxed" role="status"></p>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div role="group" aria-label="プレビュー表示" class="inline-flex bg-coffee-100 rounded-lg p-1 text-xs font-bold">
+                                <button id="preview-2d-button" onclick="setPreviewMode('2d')" aria-pressed="true" class="px-3 py-2 rounded-md bg-white text-coffee-800 shadow-sm">2D・印刷確認</button>
+                                <button id="preview-3d-button" onclick="setPreviewMode('3d')" aria-pressed="false" class="px-3 py-2 rounded-md text-coffee-600">3D・豆袋で見る</button>
+                            </div>
+                            <p class="text-[11px] text-coffee-600">印刷するのはラベルだけです。</p>
+                        </div>
+
                         <div id="qr-settings" class="hidden bg-coffee-50 border border-coffee-200 rounded-xl p-3 space-y-2">
-                            <label for="public-url-input" class="block text-[11px] font-black text-coffee-700">QR Link URL (GitHub Pages)</label>
+                            <label for="public-url-input" class="block text-[11px] font-black text-coffee-700">QRの公開先URL（GitHub Pages）</label>
                             <div class="flex flex-col md:flex-row gap-2">
                                 <input id="public-url-input" type="url" placeholder="https://username.github.io/repository/" class="flex-1 text-xs bg-white border border-coffee-200 rounded-lg px-3 py-2 font-bold text-coffee-800 focus:outline-none focus:border-coffee-600">
-                                <button type="button" onclick="savePublicUrl()" class="text-xs font-black bg-coffee-800 hover:bg-coffee-900 text-white rounded-lg px-4 py-2">Save</button>
+                                <button type="button" onclick="savePublicUrl()" class="text-xs font-black bg-coffee-800 hover:bg-coffee-900 text-white rounded-lg px-4 py-2">保存</button>
                             </div>
                             <p id="qr-payload-note" class="text-[10px] font-bold text-coffee-500">Set your GitHub Pages URL to make phone scans open this app.</p>
                         </div>
 
                         <!-- The Live Label Render Area -->
-                        <div class="flex justify-center bg-stone-100 p-4 md:p-8 rounded-xl border-2 border-dashed border-coffee-200 relative overflow-hidden">
+                        <div id="label-preview-stage" class="flex justify-center items-center bg-stone-100 p-4 md:p-8 rounded-xl border border-coffee-200 relative overflow-hidden" aria-label="印刷ラベルのプレビュー">
                             
                             <!-- Label Content Container -->
                             <div id="printable-label-area" class="bg-white text-black shadow-md border border-gray-300 relative font-sans transition-all duration-300" style="width: 320px; height: 320px; box-sizing: border-box;">
@@ -401,6 +471,18 @@
                             </div>
                         </div>
 
+                        <div id="label-3d-stage" class="hidden no-print relative rounded-xl overflow-hidden border border-coffee-200 bg-[#f0ece4]" style="height: 430px;">
+                            <div id="label-3d-canvas" class="absolute inset-0" role="img" aria-label="選択したラベルを貼った豆袋の3Dプレビュー"></div>
+                            <div class="absolute top-4 left-4 pointer-events-none">
+                                <p class="text-[10px] font-bold tracking-[.15em] text-coffee-600">PACKAGE PREVIEW</p>
+                                <p class="text-xs text-coffee-700 mt-1">ドラッグで回転・ピンチで拡大</p>
+                            </div>
+                            <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-2">
+                                <span id="label-3d-status" role="status" class="text-[11px] text-coffee-700 bg-white/90 px-3 py-2 rounded-lg">3Dを準備しています…</span>
+                                <button onclick="resetLabel3DView()" class="text-xs font-bold text-coffee-800 bg-white/90 border border-coffee-200 px-3 py-2 rounded-lg">角度を戻す</button>
+                            </div>
+                        </div>
+
                         <!-- QR Detail Page Story Preview (confirmation only, not printed on the physical label) -->
                         <div id="qr-story-preview" class="hidden bg-coffee-50 border border-coffee-200 rounded-xl p-3 text-xs text-coffee-600">
                             <p class="font-bold text-coffee-700 mb-1 flex items-center">
@@ -411,26 +493,32 @@
                         </div>
 
                         <!-- Actions -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <button onclick="downloadLabelImage()" class="flex items-center justify-center bg-coffee-100 hover:bg-coffee-200 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
                                 <i data-lucide="download" class="w-4 h-4 mr-1.5"></i>
-                                PNGをダウンロード (300dpi・白黒)
+                                PNGを保存（300dpi・白黒）
                             </button>
-                            <button onclick="exportCurrentLabelData()" class="flex items-center justify-center bg-white hover:bg-coffee-50 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
-                                <i data-lucide="file-json" class="w-4 h-4 mr-1.5"></i>
-                                labels.jsonに追加/更新
-                            </button>
-                            
-                            <button onclick="copyCurrentLabelUrl()" class="flex items-center justify-center bg-white hover:bg-coffee-50 text-coffee-800 font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm border border-coffee-200">
-                                <i data-lucide="link" class="w-4 h-4 mr-1.5"></i>
-                                公開URLをコピー
-                            </button>
-
                             <button onclick="printCurrentLabel()" class="flex items-center justify-center bg-coffee-800 hover:bg-coffee-900 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md">
                                 <i data-lucide="printer" class="w-4 h-4 mr-1.5"></i>
-                                PC/ブラウザからダイレクト印刷
+                                ブラウザで印刷
                             </button>
                         </div>
+                        <p class="text-[11px] text-coffee-600 leading-relaxed">印刷設定は選択した用紙サイズ・倍率100%・余白なしを確認してください。PNGはプリンター用アプリにも取り込めます。</p>
+                        <section class="rounded-xl border border-coffee-200 bg-coffee-50/50 p-4 space-y-3" aria-labelledby="publication-title">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <h4 id="publication-title" class="font-bold text-sm text-coffee-800">QRで豆の情報を届ける</h4>
+                                <span id="label-publication-status" class="text-[11px] font-bold text-coffee-700" role="status"></span>
+                            </div>
+                            <p id="label-publication-note" class="text-xs text-coffee-600 leading-relaxed"></p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button id="export-label-button" onclick="exportCurrentLabelData()" class="flex items-center justify-center bg-white hover:bg-coffee-100 border border-coffee-200 text-coffee-800 font-bold py-3 px-3 rounded-lg text-xs">
+                                    <i data-lucide="file-json" class="w-4 h-4 mr-1.5"></i>公開用JSONを書き出す
+                                </button>
+                                <button onclick="copyCurrentLabelUrl()" class="flex items-center justify-center bg-white hover:bg-coffee-100 border border-coffee-200 text-coffee-800 font-bold py-3 px-3 rounded-lg text-xs">
+                                    <i data-lucide="link" class="w-4 h-4 mr-1.5"></i>QRのURLをコピー
+                                </button>
+                            </div>
+                        </section>
                     </div>
                 </div>
 
@@ -439,8 +527,8 @@
                     <div class="bg-coffee-100 p-4 rounded-full text-coffee-600 mb-4 animate-pulse">
                         <i data-lucide="coffee" class="w-8 h-8"></i>
                     </div>
-                    <h3 class="font-bold text-base text-coffee-800 mb-1">コーヒー豆を選択してください</h3>
-                    <p class="text-xs text-coffee-500 max-w-sm leading-relaxed">
+                    <h3 id="placeholder-title" class="font-bold text-base text-coffee-800 mb-1">コーヒー豆を選択してください</h3>
+                    <p id="placeholder-description" class="text-xs text-coffee-500 max-w-sm leading-relaxed">
                         左側のインベントリ一覧から豆を選ぶか、「新規登録」ボタンを押して新しく購入した豆を追加してください。
                     </p>
                 </div>
@@ -449,16 +537,18 @@
     </main>
 
     <!-- App Bottom Nav for Mobile view convenience (No Print) -->
-    <div id="mobile-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-coffee-200 px-6 py-2 flex justify-around items-center md:hidden z-40 no-print">
+    <nav id="mobile-nav" aria-label="管理画面のナビゲーション" class="fixed bottom-0 left-0 right-0 bg-white border-t border-coffee-200 px-6 py-2 flex justify-around items-center md:hidden z-40 no-print">
+        <button onclick="focusWorkspaceSection('inventory-panel')" class="flex flex-col items-center text-coffee-700 p-2">
+            <i data-lucide="boxes" class="w-5 h-5"></i><span class="text-[10px] font-bold mt-0.5">豆を選ぶ</span>
+        </button>
+        <button id="mobile-print-link" onclick="focusWorkspaceSection('label-builder')" class="flex flex-col items-center text-coffee-700 p-2">
+            <i data-lucide="printer" class="w-5 h-5"></i><span class="text-[10px] font-bold mt-0.5">ラベル</span>
+        </button>
         <button onclick="openAddModal()" class="flex flex-col items-center text-coffee-500 hover:text-coffee-800">
             <i data-lucide="plus-circle" class="w-5 h-5"></i>
             <span class="text-[9px] font-bold mt-0.5">新規追加</span>
         </button>
-        <button onclick="exportData()" class="flex flex-col items-center text-coffee-500 hover:text-coffee-800">
-            <i data-lucide="download" class="w-5 h-5"></i>
-            <span class="text-[9px] font-bold mt-0.5">データ出力</span>
-        </button>
-    </div>
+    </nav>
 
     <!-- Add/Edit Modal (No Print) -->
     <!-- Quick Label (おすそ分け) Modal -->
@@ -785,6 +875,9 @@
         }
 
         function getQrPayload(bean) {
+            if (viewingPublicLabelBean && bean.id === viewingPublicLabelBean.id) {
+                return getPublicLabelUrl({ labelId: bean.id });
+            }
             const labelId = labelIdForBean(bean);
             const publicUrl = getPublicAppUrl();
             if (publicUrl) {
@@ -822,10 +915,10 @@
             input.value = getPublicAppUrl();
             const payload = getQrPayload(bean);
             if (payload.startsWith('http')) {
-                note.textContent = `QR opens: ${payload}`;
+                note.textContent = `QRのリンク先: ${payload}`;
                 note.className = 'text-[10px] font-bold text-green-700 break-all';
             } else {
-                note.textContent = 'Local preview only. Set your GitHub Pages URL so phone scans can open the app.';
+                note.textContent = 'ローカル確認用です。別端末からQRを開くには公開先URLを設定してください。';
                 note.className = 'text-[10px] font-bold text-red-700';
             }
         }
@@ -839,7 +932,7 @@
             }
 
             localStorage.setItem(PUBLIC_APP_URL_KEY, value);
-            const bean = beans.find(b => b.id === selectedBeanId);
+            const bean = getCurrentBean();
             if (bean) {
                 generateLabelQR(bean);
                 updateQrPayloadNote(bean);
@@ -1599,7 +1692,7 @@
             if (!listContainer || !countBadge) return;
 
             const labels = remotePublicLabels.filter(isPublishedLabel);
-            countBadge.textContent = `${labels.length} PUBLIC`;
+            countBadge.textContent = `${labels.length} 件`;
 
             if (labels.length === 0) {
                 listContainer.innerHTML = `
@@ -1719,7 +1812,11 @@
                         selectBean(id, { preserveHash: true });
                         showToast(`「${foundBean.name}」のラベル情報を表示しています`);
                     } else {
+                        selectedBeanId = null;
+                        viewingPublicLabelBean = null;
                         updateUIState();
+                        document.getElementById('placeholder-title').textContent = 'ラベルが見つかりません';
+                        document.getElementById('placeholder-description').textContent = '公開用データにこのラベルがありません。リンクをご確認いただくか、豆を受け取った方へお問い合わせください。';
                     }
                 }
             } else if (hash && hash.startsWith('#bean-')) {
@@ -1754,59 +1851,59 @@
             }, 4000);
         }
 
-        // Render Sidebar
+        let beanFilter = 'all';
+
+        function focusWorkspaceSection(id) {
+            const section = document.getElementById(id);
+            if (!section || (id === 'label-builder' && !getCurrentBean())) return;
+            section.scrollIntoView({ block: 'start' });
+            section.focus({ preventScroll: true });
+        }
+
+        function setBeanFilter(value) {
+            beanFilter = value;
+            ['all', 'roasted', 'template'].forEach(filter => {
+                const button = document.getElementById(`filter-${filter}`);
+                const active = filter === value;
+                button.setAttribute('aria-pressed', String(active));
+                button.className = `px-3 py-2 rounded-lg font-bold ${active ? 'bg-coffee-700 text-white' : 'bg-coffee-50 text-coffee-700'}`;
+            });
+            renderBeansList();
+        }
+
         function renderBeansList() {
             const listContainer = document.getElementById('beans-list');
-            const countBadge = document.getElementById('bean-count');
-            countBadge.textContent = `${beans.length} CANISTERS`;
-
-            if (beans.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="text-center py-12 text-coffee-400 bg-coffee-50/50 rounded-xl border border-dashed border-coffee-200">
-                        <i data-lucide="cup-soda" class="w-10 h-10 mx-auto mb-2 opacity-45"></i>
-                        <p class="text-xs">登録されているコーヒー豆はありません</p>
-                        <button onclick="openAddModal()" class="mt-2 text-xs text-coffee-700 font-bold underline">最初の豆を追加</button>
-                    </div>
-                `;
-                lucide.createIcons();
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            const filtered = beans.filter(bean => {
+                const matchesQuery = [bean.name, beanOriginText(bean), bean.roast].some(value => String(value).toLowerCase().includes(query));
+                return matchesQuery && (beanFilter === 'all' || (beanFilter === 'roasted' ? hasRoastDate(bean) : !hasRoastDate(bean)));
+            });
+            document.getElementById('bean-count').textContent = `${beans.length} 件`;
+            document.getElementById('bean-filter-count').textContent = `${filtered.length} / ${beans.length} 件を表示`;
+            if (!filtered.length) {
+                listContainer.innerHTML = beans.length
+                    ? '<p class="text-center py-10 text-xs text-coffee-600">該当する豆がありません。検索や絞り込みを変更してください。</p>'
+                    : '<p class="text-center py-10 text-xs text-coffee-600">豆を登録して、最初のラベルを作りましょう。</p>';
                 return;
             }
-
-            let html = '';
-            beans.forEach(bean => {
-                const agingInfo = getAgingStatus(bean.roastDate);
-                const isSelected = bean.id === selectedBeanId;
-                
-                const roastColor = roastColorClass(bean.roast);
-
-                html += `
-                    <div onclick="selectBean('${bean.id}')" class="p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
-                        isSelected 
-                        ? 'border-coffee-700 bg-coffee-50/80 shadow-md ring-1 ring-coffee-700' 
-                        : 'border-coffee-100 hover:border-coffee-200 hover:bg-stone-50 bg-white'
-                    }">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="text-[9px] font-black tracking-widest text-coffee-400 uppercase">${beanOriginText(bean)}</span>
-                            <span class="text-[8px] text-white px-1.5 py-0.5 rounded font-black ${roastColor}">${bean.roast}</span>
-                        </div>
-                        <h4 class="font-bold text-coffee-900 text-xs truncate mb-1.5">${bean.name}</h4>
-                        
-                        <div class="flex items-center justify-between text-[10px] text-coffee-500 pt-2 border-t border-dashed border-coffee-100">
-                            <span class="flex items-center">
-                                <i data-lucide="calendar" class="w-3 h-3 mr-1 text-coffee-400"></i>
-                                ${roastDateText(bean)}
-                            </span>
-                            <span class="font-bold ${agingInfo.colorClass} px-2 py-0.5 rounded-full text-[8px] flex items-center">
-                                <span class="w-1 h-1 rounded-full bg-current mr-1"></span>
-                                ${agingInfo.text}
-                            </span>
-                        </div>
-                    </div>
-                `;
+            listContainer.innerHTML = filtered.map(bean => {
+                const selected = !viewingPublicLabelBean && bean.id === selectedBeanId;
+                const aging = getAgingStatus(bean.roastDate);
+                return `<button type="button" data-bean-id="${escapeHtml(bean.id)}" aria-pressed="${selected}" class="bean-item p-3.5 rounded-xl border transition-all ${selected ? 'border-coffee-700 bg-coffee-50 shadow-sm ring-1 ring-coffee-700' : 'border-coffee-200 hover:bg-coffee-50 bg-white'}">
+                    <span class="flex justify-between items-start gap-2 mb-1">
+                        <span class="text-[10px] font-bold text-coffee-600 uppercase">${escapeHtml(beanOriginText(bean))}</span>
+                        <span class="text-[9px] text-white px-1.5 py-0.5 rounded font-bold ${roastColorClass(bean.roast)}">${escapeHtml(bean.roast)}</span>
+                    </span>
+                    <span class="block font-bold text-coffee-900 text-sm mb-2 break-words">${escapeHtml(bean.name)}</span>
+                    <span class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-coffee-600 pt-2 border-t border-coffee-100">
+                        <span>${escapeHtml(roastDateText(bean))}</span>
+                        <span class="font-bold ${aging.colorClass} px-2 py-1 rounded-full text-[9px]">${escapeHtml(aging.text)}</span>
+                    </span>
+                </button>`;
+            }).join('');
+            listContainer.querySelectorAll('[data-bean-id]').forEach(button => {
+                button.addEventListener('click', () => selectBean(button.dataset.beanId));
             });
-
-            listContainer.innerHTML = html;
-            lucide.createIcons();
         }
 
         function getAgingStatus(roastDateStr) {
@@ -1894,56 +1991,58 @@
         }
 
         function filterBeans() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = beans.filter(b => 
-                b.name.toLowerCase().includes(query) || 
-                beanOriginText(b).toLowerCase().includes(query) ||
-                b.roast.toLowerCase().includes(query)
-            );
-            
-            const listContainer = document.getElementById('beans-list');
-            if (filtered.length === 0) {
-                listContainer.innerHTML = `<div class="text-center py-10 text-xs text-coffee-400">一致する銘柄が見つかりません。</div>`;
-                return;
+            renderBeansList();
+        }
+
+        function labelContentMatches(label, bean) {
+            const record = labelToBeanRecord(label);
+            return ['name', 'roast', 'process', 'roastDate', 'grind', 'weight', 'notes', 'originNote', 'sour', 'bitter', 'sweet', 'body', 'aroma']
+                .every(key => record[key] === bean[key])
+                && JSON.stringify(beanCountryNames(record)) === JSON.stringify(beanCountryNames(bean));
+        }
+
+        function updateLabelWorkflow(bean) {
+            const publicView = !!viewingPublicLabelBean && bean.id === viewingPublicLabelBean.id;
+            const id = publicView ? bean.id : labelIdForBean(bean);
+            const remote = findPublicLabel(id);
+            const draft = publicLabels.find(label => label.labelId === id);
+            const status = document.getElementById('label-publication-status');
+            const note = document.getElementById('label-publication-note');
+            document.getElementById('export-label-button').disabled = publicView || !hasRoastDate(bean);
+            if (publicView) {
+                status.textContent = '公開用ファイルを閲覧中';
+                note.textContent = '印刷・PNG保存できます。変更する場合は「保存した豆」から元の焙煎ロットを選んでください。';
+            } else if (!hasRoastDate(bean)) {
+                status.textContent = '焙煎日を入力してください';
+                note.textContent = 'テンプレートは印刷・PNG保存できます。QR公開用JSONには、焙煎日を入力してから書き出してください。';
+            } else {
+                status.textContent = remote && labelContentMatches(remote, bean) ? '読込ファイルと内容一致'
+                    : draft && labelContentMatches(draft, bean) ? '下書きあり・反映確認待ち'
+                    : remote ? '変更あり・再書き出しが必要' : 'まだ公開用ファイルにありません';
+                note.textContent = 'JSONを書き出す → 内容を確認 → リポジトリの labels.json と置き換えて公開。書き出すだけでは公開サイトに反映されません。';
             }
+        }
 
-            let html = '';
-            filtered.forEach(bean => {
-                const agingInfo = getAgingStatus(bean.roastDate);
-                const isSelected = bean.id === selectedBeanId;
-                const roastColor = roastColorClass(bean.roast);
-
-                html += `
-                    <div onclick="selectBean('${bean.id}')" class="p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
-                        isSelected ? 'border-coffee-700 bg-coffee-50/80 shadow-md ring-1 ring-coffee-700' : 'border-coffee-100 hover:border-coffee-200 hover:bg-stone-50 bg-white'
-                    }">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="text-[9px] font-black tracking-widest text-coffee-400 uppercase">${beanOriginText(bean)}</span>
-                            <span class="text-[8px] text-white px-1.5 py-0.5 rounded font-black ${roastColor}">${bean.roast}</span>
-                        </div>
-                        <h4 class="font-bold text-coffee-900 text-xs truncate mb-1.5">${bean.name}</h4>
-                        <div class="flex items-center justify-between text-[10px] text-coffee-500 pt-2 border-t border-dashed border-coffee-100">
-                            <span class="flex items-center">
-                                <i data-lucide="calendar" class="w-3 h-3 mr-1 text-coffee-400"></i>
-                                ${roastDateText(bean)}
-                            </span>
-                            <span class="font-bold ${agingInfo.colorClass} px-2 py-0.5 rounded-full text-[8px] flex items-center">
-                                <span class="w-1 h-1 rounded-full bg-current mr-1"></span>
-                                ${agingInfo.text}
-                            </span>
-                        </div>
-                    </div>
-                `;
+        function syncLabelControls() {
+            const select = document.getElementById('label-size-select');
+            const fixedSize = activeTheme === 'package' ? '62x90' : activeTheme === 'simple-package' ? '62x62' : null;
+            if (fixedSize) select.value = fixedSize;
+            select.disabled = !!fixedSize;
+            const names = { front: '表ラベル', modern: 'QR付き', package: '裏ラベル', 'simple-package': 'シンプル裏' };
+            document.getElementById('label-format-note').textContent = `${names[activeTheme]} / ${select.value.replace('x', ' × ')} mm${fixedSize ? '（このデザインはサイズ固定）' : ''} / ${activeTheme === 'modern' ? 'QRあり' : 'QRなし'}`;
+            ['front', 'modern', 'package', 'simple-package'].forEach(theme => {
+                document.getElementById(`btn-theme-${theme}`).setAttribute('aria-pressed', String(theme === activeTheme));
             });
-            listContainer.innerHTML = html;
-            lucide.createIcons();
         }
 
         function updateUIState() {
             const workspace = document.getElementById('detail-workspace');
             const placeholder = document.getElementById('detail-placeholder');
 
-            if (!selectedBeanId) {
+            const currentBean = getCurrentBean();
+            document.getElementById('workspace-print-link').disabled = !currentBean;
+            document.getElementById('mobile-print-link').disabled = !currentBean;
+            if (!currentBean) {
                 workspace.classList.add('hidden');
                 placeholder.classList.remove('hidden');
                 return;
@@ -2049,7 +2148,10 @@
         }
 
         function generateLabelPreview(bean) {
+            syncLabelControls();
+            updateLabelWorkflow(bean);
             updateQrStoryPreview(bean);
+            if (previewMode === '3d') refreshLabel3D();
             if (activeTheme === 'front') {
                 renderFrontPreview(bean);
                 return;
@@ -2229,20 +2331,22 @@
         }
 
         function changeLabelStyle() {
+            syncLabelControls();
+            if (previewMode === '3d') refreshLabel3D();
             if (activeTheme === 'front') {
-                const bean = beans.find(b => b.id === selectedBeanId);
+                const bean = getCurrentBean();
                 if (bean) renderFrontPreview(bean);
                 return;
             }
             if (activeTheme === 'package') {
-                const bean = beans.find(b => b.id === selectedBeanId);
+                const bean = getCurrentBean();
                 if (bean) {
                     renderPackagePreview(bean);
                 }
                 return;
             }
             if (activeTheme === 'simple-package') {
-                const bean = beans.find(b => b.id === selectedBeanId);
+                const bean = getCurrentBean();
                 if (bean) renderSimplePackagePreview(bean);
                 return;
             }
@@ -2277,6 +2381,7 @@
 
         function setTheme(theme) {
             activeTheme = theme;
+            syncLabelControls();
             if (theme === 'simple-package') {
                 document.getElementById('label-size-select').value = '62x62';
             }
@@ -2291,7 +2396,7 @@
             document.getElementById('qr-settings').className = theme === 'modern'
                 ? 'bg-coffee-50 border border-coffee-200 rounded-xl p-3 space-y-2'
                 : 'hidden bg-coffee-50 border border-coffee-200 rounded-xl p-3 space-y-2';
-            const bean = beans.find(b => b.id === selectedBeanId);
+            const bean = getCurrentBean();
             if (bean) generateLabelPreview(bean);
         }
 
@@ -2562,7 +2667,7 @@
         }
 
         async function copyCurrentLabelUrl() {
-            const bean = beans.find(b => b.id === selectedBeanId);
+            const bean = getCurrentBean();
             if (!bean) {
                 showToast('コピーするラベルを選択してください');
                 return;
@@ -2578,6 +2683,7 @@
         }
 
         function exportCurrentLabelData() {
+            if (viewingPublicLabelBean || isQrViewMode) return;
             const bean = beans.find(b => b.id === selectedBeanId);
             if (!bean) {
                 showToast('書き出すラベルを選択してください');
@@ -2590,8 +2696,9 @@
             const label = createLabelSnapshot(bean);
             publicLabels = upsertLabel(publicLabels, label).filter(entry => hasRoastDate(entry.roastDate));
             saveDraftLabels(publicLabels);
+            updateLabelWorkflow(bean);
             downloadJsonFile('labels.json', publicLabels);
-            showToast(`labels.json を書き出しました（${publicLabels.length}件）`);
+            showToast(`公開用JSONを書き出しました（${publicLabels.length}件）。公開サイトへの反映は別途必要です。`);
         }
 
         function normalizeBeanRecord(bean, index = 0) {
@@ -2747,21 +2854,22 @@
             ctx.putImageData(imageData, 0, 0);
         }
 
-        function labelFilePrefix() {
+        function labelFilePrefix(theme = activeTheme) {
             return {
                 front: 'Fro',
                 modern: 'Mod',
                 package: 'Pac',
                 'simple-package': 'Smp'
-            }[activeTheme] || 'Lbl';
+            }[theme] || 'Lbl';
         }
 
-        function finishCanvasDownload(canvas, bean, originalBtn, originalHTML) {
+        function finishCanvasDownload(canvas, bean, originalBtn, originalHTML, theme = activeTheme) {
             binarizeCanvas(canvas);
             canvas.toBlob((blob) => {
                 if (!blob) {
                     showToast('PNGの作成に失敗しました');
                     originalBtn.innerHTML = originalHTML;
+                    originalBtn.disabled = false;
                     lucide.createIcons();
                     return;
                 }
@@ -2769,7 +2877,7 @@
                 const link = document.createElement('a');
                 const safeName = bean.name.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_');
                 const objectUrl = URL.createObjectURL(blob);
-                link.download = `${labelFilePrefix()}_${safeName}.png`;
+                link.download = `${labelFilePrefix(theme)}_${safeName}.png`;
                 link.href = objectUrl;
                 link.style.display = 'none';
                 document.body.appendChild(link);
@@ -2779,6 +2887,7 @@
 
                 setTimeout(() => {
                     originalBtn.innerHTML = originalHTML;
+                    originalBtn.disabled = false;
                     lucide.createIcons();
                 }, 800);
             }, 'image/png');
@@ -3113,25 +3222,215 @@
             return false;
         }
 
+        function prepareLabelPrint() {
+            const area = document.getElementById('printable-label-area');
+            if (!getCurrentBean() || isQrViewMode) return;
+            const heightMm = parseFloat(area.style.getPropertyValue('--print-height')) || 62;
+            const heightPx = parseFloat(area.style.height) || 300;
+            area.style.setProperty('--print-preview-height', `${heightPx}px`);
+            area.style.setProperty('--print-scale-x', String(62 / 25.4 * 96 / 300));
+            area.style.setProperty('--print-scale-y', String(heightMm / 25.4 * 96 / heightPx));
+            document.getElementById('print-page-style').textContent = `@page { size: 62mm ${heightMm}mm; margin: 0; }`;
+        }
+        window.addEventListener('beforeprint', prepareLabelPrint);
+
         function printCurrentLabel() {
-            const bean = beans.find(b => b.id === selectedBeanId);
+            const bean = getCurrentBean();
             if (bean && !hasRoastDate(bean)) {
                 window.alert('焙煎日が未入力です。テンプレートとしてそのまま印刷できます。');
             }
+            if (!bean || isQrViewMode) { showToast('印刷するラベルを選んでください'); return; }
+            prepareLabelPrint();
             window.print();
         }
 
-        async function downloadLabelImage() {
-            const bean = beans.find(b => b.id === selectedBeanId);
-            if (!bean) return;
-            warnIfRoastDateMissing(bean);
+        let previewMode = '2d';
+        let label3D = null;
+        let label3DLoad = null;
+        let label3DRevision = 0;
 
-            const originalBtn = window.event?.currentTarget || document.querySelector('button[onclick="downloadLabelImage()"]');
-            const originalHTML = originalBtn.innerHTML;
-            originalBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 mr-1.5 animate-spin"></i>作成中...`;
-            lucide.createIcons();
+        function setPreviewMode(mode) {
+            previewMode = mode;
+            document.getElementById('label-preview-stage').classList.toggle('hidden', mode === '3d');
+            document.getElementById('label-3d-stage').classList.toggle('hidden', mode !== '3d');
+            ['2d', '3d'].forEach(value => {
+                const button = document.getElementById(`preview-${value}-button`);
+                button.setAttribute('aria-pressed', String(mode === value));
+                button.className = `px-3 py-2 rounded-md ${mode === value ? 'bg-white text-coffee-800 shadow-sm' : 'text-coffee-600'}`;
+            });
+            if (mode === '3d') refreshLabel3D();
+            else label3DRevision++;
+        }
 
-            const size = document.getElementById('label-size-select').value;
+        async function createLabel3D() {
+            const [THREE, { OrbitControls }] = await Promise.all([
+                import('three'), import('three/addons/controls/OrbitControls.js')
+            ]);
+            const host = document.getElementById('label-3d-canvas');
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFShadowMap;
+            renderer.domElement.style.cssText = 'width:100%;height:100%;display:block;cursor:grab;touch-action:none';
+            renderer.domElement.setAttribute('aria-hidden', 'true');
+            host.appendChild(renderer.domElement);
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(36, 1, .1, 50);
+            camera.position.set(3.5, 2.8, 7.2);
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 1.75, 0);
+            controls.enablePan = false;
+            controls.minDistance = 5;
+            controls.maxDistance = 11;
+            controls.minPolarAngle = .55;
+            controls.maxPolarAngle = 1.7;
+            controls.update();
+            controls.saveState();
+            const render = () => {
+                if (previewMode === '3d' && !document.hidden) renderer.render(scene, camera);
+            };
+            controls.addEventListener('change', render);
+            scene.add(new THREE.HemisphereLight(0xffffff, 0x6a5642, 2.6));
+            const light = new THREE.DirectionalLight(0xfff4e1, 4);
+            light.position.set(-3, 7, 5);
+            light.castShadow = true;
+            light.shadow.mapSize.set(1024, 1024);
+            light.shadow.camera.left = -4;
+            light.shadow.camera.right = 4;
+            light.shadow.camera.top = 5;
+            light.shadow.camera.bottom = -3;
+            light.shadow.normalBias = .03;
+            scene.add(light);
+            const rim = new THREE.DirectionalLight(0xffffff, 2);
+            rim.position.set(4, 3, -4);
+            scene.add(rim);
+
+            const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.85, .14, 64),
+                new THREE.MeshStandardMaterial({ color: 0xe4dac9, roughness: .9 }));
+            pedestal.position.y = .02;
+            pedestal.receiveShadow = true;
+            scene.add(pedestal);
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200),
+                new THREE.ShadowMaterial({ opacity: .14 }));
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -.06;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            const bag = new THREE.Group();
+            scene.add(bag);
+            const shape = new THREE.Shape();
+            shape.moveTo(-.93, -1.6);
+            shape.quadraticCurveTo(-1.1, -1.6, -1.1, -1.4);
+            shape.lineTo(-.88, 1.4);
+            shape.quadraticCurveTo(-.87, 1.55, -.72, 1.55);
+            shape.lineTo(.72, 1.55);
+            shape.quadraticCurveTo(.87, 1.55, .88, 1.4);
+            shape.lineTo(1.1, -1.4);
+            shape.quadraticCurveTo(1.1, -1.6, .93, -1.6);
+            shape.closePath();
+            const paper = new THREE.MeshStandardMaterial({ color: 0x34483e, roughness: .83, metalness: .03 });
+            const pouch = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, {
+                depth: .56, bevelEnabled: true, bevelThickness: .10, bevelSize: .10, bevelSegments: 5, steps: 1, curveSegments: 12
+            }), paper);
+            pouch.position.set(0, 1.82, -.28);
+            pouch.castShadow = true;
+            pouch.receiveShadow = true;
+            bag.add(pouch);
+            const sealMaterial = new THREE.MeshStandardMaterial({ color: 0x26382f, roughness: .8 });
+            const seal = new THREE.Mesh(new THREE.BoxGeometry(1.75, .09, .74), sealMaterial);
+            seal.position.set(0, 3.19, 0);
+            bag.add(seal);
+            const labelMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .82 });
+            const label = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), labelMaterial);
+            label.position.set(0, 1.68, .391);
+            bag.add(label);
+            const coffee = new THREE.MeshStandardMaterial({ color: 0x503322, roughness: .83 });
+            [[-1.25, .12, .85, -.4], [-.95, .12, 1.15, .6], [1.18, .12, .85, .8], [1.4, .12, .42, -.3]].forEach(([x, y, z, rotation]) => {
+                const bean = new THREE.Mesh(new THREE.SphereGeometry(.15, 20, 12), coffee);
+                bean.scale.set(.8, .5, 1.2);
+                bean.position.set(x, y, z);
+                bean.rotation.y = rotation;
+                bean.castShadow = true;
+                const crease = new THREE.Mesh(new THREE.BoxGeometry(.025, .02, .22), sealMaterial);
+                crease.position.y = .15;
+                bean.add(crease);
+                scene.add(bean);
+            });
+            const resize = () => {
+                const width = host.clientWidth;
+                const height = host.clientHeight;
+                if (!width || !height) return;
+                renderer.setSize(width, height, false);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                render();
+            };
+            const observer = new ResizeObserver(resize);
+            observer.observe(host);
+            document.addEventListener('visibilitychange', render);
+            renderer.domElement.addEventListener('webglcontextlost', event => {
+                event.preventDefault();
+                setPreviewMode('2d');
+                showToast('3D表示を維持できないため、2Dプレビューに戻しました。');
+            });
+            const view = { THREE, renderer, controls, label, labelMaterial, resize, render, observer };
+            window.addEventListener('pagehide', () => {
+                observer.disconnect();
+                controls.dispose();
+                scene.traverse(object => {
+                    object.geometry?.dispose();
+                    const materials = Array.isArray(object.material) ? object.material : [object.material];
+                    materials.forEach(material => material?.dispose());
+                });
+                labelMaterial.map?.dispose();
+                renderer.dispose();
+            }, { once: true });
+            return view;
+        }
+
+        async function refreshLabel3D() {
+            const bean = getCurrentBean();
+            if (!bean || previewMode !== '3d' || isQrViewMode) return;
+            const revision = ++label3DRevision;
+            const status = document.getElementById('label-3d-status');
+            status.textContent = '3Dを準備しています…';
+            try {
+                if (!label3D) {
+                    label3DLoad ||= createLabel3D();
+                    label3D = await label3DLoad;
+                }
+                const canvas = await renderLabelCanvas(bean);
+                if (revision !== label3DRevision || previewMode !== '3d') return;
+                binarizeCanvas(canvas);
+                const { THREE, label, labelMaterial } = label3D;
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.colorSpace = THREE.SRGBColorSpace;
+                texture.anisotropy = Math.min(label3D.renderer.capabilities.getMaxAnisotropy(), 8);
+                labelMaterial.map?.dispose();
+                labelMaterial.map = texture;
+                labelMaterial.needsUpdate = true;
+                label.geometry.dispose();
+                label.geometry = new THREE.PlaneGeometry(1.6, 1.6 * canvas.height / canvas.width);
+                label3D.resize();
+                status.textContent = '豆袋はイメージです。印刷内容は2Dで確認';
+            } catch (error) {
+                console.warn('3D preview unavailable:', error);
+                label3DLoad = null;
+                if (revision !== label3DRevision) return;
+                setPreviewMode('2d');
+                showToast('3Dを読み込めませんでした。2Dプレビューで続けられます。');
+            }
+        }
+
+        function resetLabel3DView() {
+            label3D?.controls.reset();
+            label3D?.render();
+        }
+
+        async function renderLabelCanvas(bean, theme = activeTheme, size = document.getElementById('label-size-select').value) {
+            await document.fonts?.ready;
             const canvas = document.createElement('canvas');
 
             let width = 600;
@@ -3148,12 +3447,12 @@
                 labelHeightMm = 90;
             }
 
-            if (activeTheme === 'package') {
+            if (theme === 'package') {
                 width = 600;
                 height = 740;
                 labelHeightMm = 90;
             }
-            if (activeTheme === 'simple-package') {
+            if (theme === 'simple-package') {
                 width = 600;
                 height = 600;
                 labelHeightMm = 62;
@@ -3167,33 +3466,21 @@
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, width, height);
 
-            if (activeTheme === 'front') {
-                try {
-                    await drawFrontCanvasLabel(ctx, width, height, bean);
-                    finishCanvasDownload(canvas, bean, originalBtn, originalHTML);
-                } catch (error) {
-                    console.error(error);
-                    showToast('表ラベルPNGの作成に失敗しました');
-                    originalBtn.innerHTML = originalHTML;
-                    lucide.createIcons();
-                }
-                return;
+            if (theme === 'front') {
+                await drawFrontCanvasLabel(ctx, width, height, bean);
+                return canvas;
             }
-
-            if (activeTheme === 'package') {
+            if (theme === 'package') {
                 drawPackageCanvasLabel(ctx, width, height, bean);
-                finishCanvasDownload(canvas, bean, originalBtn, originalHTML);
-                return;
+                return canvas;
             }
-
-            if (activeTheme === 'simple-package') {
+            if (theme === 'simple-package') {
                 drawSimplePackageCanvasLabel(ctx, width, height, bean);
-                finishCanvasDownload(canvas, bean, originalBtn, originalHTML);
-                return;
+                return canvas;
             }
 
             ctx.strokeStyle = '#000000';
-            if (activeTheme === 'modern') {
+            if (theme === 'modern') {
                 ctx.lineWidth = 8;
                 ctx.strokeRect(10, 10, width - 20, height - 20);
             } else {
@@ -3203,7 +3490,7 @@
 
             ctx.fillStyle = '#000000';
             ctx.textAlign = 'center';
-            const modernLayout = activeTheme === 'modern';
+            const modernLayout = theme === 'modern';
             const compactLayout = size === '62x29';
 
             if (modernLayout) {
@@ -3285,30 +3572,29 @@
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
 
-            canvas.toBlob((blob) => {
-                if (!blob) {
-                    showToast('PNGの作成に失敗しました', 'error');
-                    originalBtn.innerHTML = originalHTML;
-                    lucide.createIcons();
-                    return;
-                }
+            return canvas;
+        }
 
-                const link = document.createElement('a');
-                const safeName = bean.name.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_');
-                const objectUrl = URL.createObjectURL(blob);
-                link.download = `${labelFilePrefix()}_${safeName}.png`;
-                link.href = objectUrl;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(objectUrl);
-
-                setTimeout(() => {
-                    originalBtn.innerHTML = originalHTML;
-                    lucide.createIcons();
-                }, 800);
-            }, 'image/png');
+        async function downloadLabelImage() {
+            const bean = getCurrentBean();
+            if (!bean || isQrViewMode) return;
+            warnIfRoastDateMissing(bean);
+            const button = document.querySelector('button[onclick="downloadLabelImage()"]');
+            if (button.disabled) return;
+            const originalHTML = button.innerHTML;
+            const theme = activeTheme;
+            button.disabled = true;
+            button.textContent = 'PNGを作成中…';
+            try {
+                const canvas = await renderLabelCanvas(bean, theme);
+                finishCanvasDownload(canvas, bean, button, originalHTML, theme);
+            } catch (error) {
+                console.error(error);
+                showToast('PNGの作成に失敗しました。もう一度お試しください。');
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                lucide.createIcons();
+            }
         }
     </script>
 </body>
